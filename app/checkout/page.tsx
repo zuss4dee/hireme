@@ -6,7 +6,7 @@ import { CheckoutForm } from "@/components/checkout-form";
 import { boardBids, getCandidateByUserId, getCandidateByUsername, getRival, listCandidates } from "@/lib/db";
 import { usd, priceToBeat, MIN_BID, UNLOCK_PRICE } from "@/lib/money";
 import { getSessionUser } from "@/lib/session";
-import { polarConfigured } from "@/lib/polar";
+import { stripeConfigured } from "@/lib/stripe";
 import type { PaymentType } from "@/lib/types";
 
 export const metadata: Metadata = { title: "Checkout" };
@@ -27,7 +27,7 @@ export default async function CheckoutPage({
 }) {
   const sp = await searchParams;
   const intent = (INTENTS.includes(sp.intent as PaymentType) ? sp.intent : "bid") as PaymentType;
-  const demoMode = !polarConfigured;
+  const demoMode = !stripeConfigured;
 
   // ------------------------------------------------------------- bid flow
   if (intent === "bid") {

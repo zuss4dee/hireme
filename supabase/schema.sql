@@ -77,7 +77,7 @@ create table if not exists public.payments (
   candidate_id uuid references public.candidate_profiles(id) on delete set null,
   amount       integer not null,                    -- cents
   payment_type text not null check (payment_type in ('bid','unlock','interview','hire')),
-  provider_payment_id text unique,   -- Polar checkout id
+  provider_payment_id text unique,   -- Stripe checkout session id
   status       text not null default 'paid',
   created_at   timestamptz not null default now()
 );

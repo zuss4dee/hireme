@@ -15,7 +15,7 @@ export type FulfilInput = {
 export type FulfilResult = { ok: true; rank: number | null; username: string } | { ok: false; error: string };
 
 /**
- * Single place where money turns into product state. Called by the Polar
+ * Single place where money turns into product state. Called by the Stripe
  * webhook, by the success page (belt and braces if the webhook is late), and
  * directly in demo mode. Idempotent on the payment provider's reference.
  */

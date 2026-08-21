@@ -97,8 +97,7 @@ export default function RulesPage() {
       </section>
 
       <p className="text-sm text-muted">
-        Payments are processed by <span className="font-semibold text-fg">Polar</span>, the merchant
-        of record — they appear on your statement and handle tax.{" "}
+        Payments are processed by <span className="font-semibold text-fg">Stripe</span>.{" "}
         <Link href="/" className="font-semibold text-money hover:underline">Back to the board</Link>
       </p>
     </div>

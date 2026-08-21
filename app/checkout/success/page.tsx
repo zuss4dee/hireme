@@ -7,48 +7,47 @@ import { getCandidateById, getCandidateByUsername } from "@/lib/db";
 import { fulfil } from "@/lib/fulfil";
 import { usd } from "@/lib/money";
 import { getSessionUser } from "@/lib/session";
-import { polar, polarConfigured } from "@/lib/polar";
+import { stripe, stripeConfigured } from "@/lib/stripe";
 import type { Candidate, PaymentType } from "@/lib/types";
 import { shareText } from "@/lib/site";
 
 export const metadata: Metadata = { title: "Payment complete" };
 export const dynamic = "force-dynamic";
 
-type Search = { checkout_id?: string; demo?: string; intent?: string; candidate?: string; amount?: string; company?: string };
+type Search = { session_id?: string; demo?: string; intent?: string; candidate?: string; amount?: string; company?: string };
 
 /**
- * The webhook is the source of truth, but local dev often has no tunnel for it
- * — so this page verifies the checkout and fulfils too. `fulfil` is idempotent
- * on the checkout id, so whichever lands first wins.
+ * The webhook is the source of truth, but local dev often has no `stripe
+ * listen` running — so this page verifies the session and fulfils too.
+ * `fulfil` is idempotent on the session id, so whichever lands first wins.
  */
 async function resolve(sp: Search): Promise<{ intent: PaymentType; amount: number; candidate: Candidate | null; company: string | null }> {
-  if (sp.checkout_id && polarConfigured) {
-    const checkout = await polar().checkouts.get({ id: sp.checkout_id });
-    const meta = (checkout.metadata ?? {}) as Record<string, unknown>;
-    const asString = (v: unknown) => (typeof v === "string" ? v : v == null ? "" : String(v));
-    const intent = (asString(meta.intent) as PaymentType) || "unlock";
-    const candidateId = asString(meta.candidate_id);
-    const amount = Number(meta.amount ?? checkout.totalAmount ?? 0);
+  if (sp.session_id && stripeConfigured) {
+    const session = await stripe().checkout.sessions.retrieve(sp.session_id);
+    const meta = session.metadata ?? {};
+    const intent = (meta.intent as PaymentType) || "unlock";
+    const candidateId = meta.candidate_id ?? "";
+    const amount = Number(meta.amount ?? session.amount_total ?? 0);
 
     // Mirrors the webhook's guard — never grant a rank the payment didn't cover.
-    const paid = checkout.amount ?? checkout.totalAmount ?? 0;
+    const paid = session.amount_subtotal ?? session.amount_total ?? 0;
 
-    if (checkout.status === "succeeded" && candidateId && paid >= amount) {
+    if (session.payment_status === "paid" && candidateId && paid >= amount) {
       await fulfil({
         intent,
         candidateId,
-        userId: asString(meta.user_id) || null,
+        userId: meta.user_id || null,
         amount,
-        company: asString(meta.company) || null,
-        message: asString(meta.message) || null,
-        paymentRef: checkout.id,
+        company: meta.company || null,
+        message: meta.message || null,
+        paymentRef: session.id,
       });
     }
 
     return {
       intent,
       amount,
-      company: asString(meta.company) || null,
+      company: meta.company || null,
       candidate: candidateId ? await getCandidateById(candidateId) : null,
     };
   }
@@ -134,7 +133,7 @@ export default async function SuccessPage({ searchParams }: { searchParams: Prom
 
       {sp.demo ? (
         <p className="text-xs text-muted">
-          Demo payment — no card was charged. Add your Polar keys to <code className="font-mono">.env.local</code> for real checkout.
+          Demo payment — no card was charged. Add your Stripe keys to <code className="font-mono">.env.local</code> for real checkout.
         </p>
       ) : null}
     </div>

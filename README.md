@@ -24,19 +24,24 @@ outbid, unlock, dashboard analytics) is clickable straight away.
 2. **Supabase** — create a project, then paste `supabase/schema.sql` into the SQL editor and run it.
    That creates every table, the RLS policies, the ranking function and the atomic `place_bid` RPC.
    Add the three Supabase keys. If you ran an earlier copy of the schema, apply
-   `supabase/migrations/001_polar.sql` too.
-3. **Polar** — create **one** one-time product in the dashboard (sandbox.polar.sh while
-   testing) and put its id in `POLAR_PRODUCT_ID`. Its catalog price is irrelevant: every
-   checkout sends an **ad-hoc USD price**, so the amount is always the one the server
-   computed. That matters — with pay-what-you-want pricing the buyer can edit the amount on
-   Polar's page, which would let someone claim a $151 rank for $1.
+   `supabase/migrations/001_polar.sql` too (it only renames a column).
+3. **Stripe** — add `STRIPE_SECRET_KEY`. There is no product to create: every checkout builds
+   an inline `price_data` line item, so the amount is always the one the server computed and
+   the buyer can't change it. For local webhooks:
 
-   Then add `POLAR_ACCESS_TOKEN`, leave `POLAR_SERVER=sandbox` until you go live, and add a
-   webhook pointing at `/api/polar/webhook` subscribed to `order.paid`. Paste its signing
-   secret as `POLAR_WEBHOOK_SECRET`.
+```bash
+stripe listen --forward-to localhost:3000/api/stripe/webhook
+```
 
-The app switches backends automatically: Supabase when its keys are present, Polar Checkout
-when its token and product id are present. Either can be enabled independently.
+   Paste the printed signing secret as `STRIPE_WEBHOOK_SECRET`. In production, add an endpoint
+   at `/api/stripe/webhook` subscribed to `checkout.session.completed`.
+
+   You are the merchant of record, so **sales tax and VAT are yours to handle**. Configure
+   Stripe Tax in the dashboard (origin address plus at least one registration), then set
+   `STRIPE_AUTOMATIC_TAX=true` — Checkout rejects the session if you enable it before then.
+
+The app switches backends automatically: Supabase when its keys are present, Stripe Checkout
+when its secret key is present. Either can be enabled independently.
 
 ## Pages
 
@@ -62,14 +67,13 @@ Everything is stored in **cents** (`current_bid: 4800` = $48).
 - **Unlock / interview / hire** — a recruiter pays $25 (`UNLOCK_PRICE`) to reveal contact
   details. A `recruiter_interest` row lands on the candidate's dashboard.
 
-Both bids and unlocks are ad-hoc fixed prices created with the checkout, so the server is
-the only thing that decides what anything costs. The client can propose a bid amount; it is
+Both bids and unlocks are inline `price_data` line items created with the checkout, so the
+server is the only thing that decides what anything costs. The client can propose a bid amount; it is
 re-validated against the current bid before checkout. Unlock prices ignore the client
 entirely. The webhook refuses to fulfil an order that cleared for less than it should have.
 
-Fulfilment lives in one place (`lib/fulfil.ts`) and is idempotent on the Polar checkout id,
-so the webhook and the success page can both call it safely. Polar is the merchant of
-record, so VAT and sales tax are handled for you.
+Fulfilment lives in one place (`lib/fulfil.ts`) and is idempotent on the Stripe session id,
+so the webhook and the success page can both call it safely.
 
 ## Deploy
 
@@ -77,8 +81,8 @@ record, so VAT and sales tax are handled for you.
 vercel
 ```
 
-Add the same environment variables in the Vercel project, then point a Polar webhook
-endpoint at `https://your-domain/api/polar/webhook` for `order.paid`.
+Add the same environment variables in the Vercel project, then point a Stripe webhook
+endpoint at `https://your-domain/api/stripe/webhook` for `checkout.session.completed`.
 
 ## Moderation
 
@@ -109,7 +113,7 @@ case-insensitively.
 
 **Every payment requires an explicit acknowledgement.** The checkout has a non-refundable
 consent checkbox, enforced server-side as well as in the UI, and the acceptance is written into
-the Polar payment metadata — so a chargeback can be answered with evidence the buyer agreed.
+the Stripe session metadata — so a chargeback can be answered with evidence the buyer agreed.
 
 **Recruiter facets come from the live board**, not a hardcoded taxonomy — the skill and
 location filters list whatever people actually put on their profiles, most common first.

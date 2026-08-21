@@ -185,8 +185,8 @@ export function CheckoutForm({
 
       <p className="text-center text-xs text-muted">
         {demoMode
-          ? "Demo mode — no Polar keys configured, so this completes instantly without charging anything."
-          : "Secure payment by Polar. You'll be redirected to complete it."}
+          ? "Demo mode — no Stripe keys configured, so this completes instantly without charging anything."
+          : "Secure payment by Stripe. You'll be redirected to complete it."}
       </p>
     </div>
   );

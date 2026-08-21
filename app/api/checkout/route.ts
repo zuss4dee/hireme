@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { getCandidateById, getCandidateByUserId } from "@/lib/db";
 import { fulfil } from "@/lib/fulfil";
 import { getSessionUser, setDemoSession } from "@/lib/session";
-import { adHocPrice, polar, polarConfigured, PRODUCT_ID_FOR_CHECKOUT } from "@/lib/polar";
+import { automaticTax, lineItemFor, stripe, stripeConfigured } from "@/lib/stripe";
 import { UNLOCK_PRICE } from "@/lib/money";
 import { supabaseConfigured } from "@/lib/supabase";
 import type { PaymentType } from "@/lib/types";
@@ -59,7 +59,7 @@ export async function POST(req: Request) {
   const message = (body.message ?? "").trim().slice(0, 400) || null;
 
   // ---------------------------------------------------------- demo payments
-  if (!polarConfigured) {
+  if (!stripeConfigured) {
     const payer = await getSessionUser();
     const result = await fulfil({
       intent,
@@ -76,13 +76,15 @@ export async function POST(req: Request) {
     return NextResponse.json({ url: `/checkout/success?${params}` });
   }
 
-  // --------------------------------------------------------- polar checkout
-  const checkout = await polar().checkouts.create({
-    products: [PRODUCT_ID_FOR_CHECKOUT()],
-    // Ad-hoc price: locks the amount to what the server just computed.
-    prices: adHocPrice(amount),
-    customerEmail: user?.email || undefined,
-    successUrl: `${origin(req)}/checkout/success?checkout_id={CHECKOUT_ID}`,
+  // -------------------------------------------------------- stripe checkout
+  const session = await stripe().checkout.sessions.create({
+    mode: "payment",
+    line_items: [lineItemFor(intent, candidate.name, amount)],
+    customer_email: user?.email || undefined,
+    success_url: `${origin(req)}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
+    cancel_url: `${origin(req)}/profile/${candidate.username}`,
+    // Stripe Tax needs an address to work out what to charge.
+    ...(automaticTax ? { automatic_tax: { enabled: true }, billing_address_collection: "required" as const } : {}),
     metadata: {
       intent,
       candidate_id: candidate.id,
@@ -95,5 +97,5 @@ export async function POST(req: Request) {
     },
   });
 
-  return NextResponse.json({ url: checkout.url });
+  return NextResponse.json({ url: session.url });
 }
