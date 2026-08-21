@@ -56,12 +56,13 @@ export async function fulfil(input: FulfilInput): Promise<FulfilResult> {
     }
   }
 
+  const candidateIntent = input.intent as "unlock" | "interview" | "hire";
   await recordInterest({
     candidateId: input.candidateId,
     recruiterId: input.userId,
     company: input.company ?? null,
     message: input.message ?? null,
-    type: input.intent,
+    type: candidateIntent,
   });
   await recordView({ candidateId: input.candidateId, viewerId: input.userId, viewerRole: "recruiter", source: "recruiter" });
   await markFulfilled(input.paymentRef ?? null);

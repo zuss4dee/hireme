@@ -11,6 +11,7 @@ import { cookies } from "next/headers";
  */
 export const MANAGE_COOKIE = "hireme_manage";
 export const VISITOR_COOKIE = "hireme_vid";
+export const COMPANY_COOKIE = "hireme_company";
 
 const YEAR = 60 * 60 * 24 * 365;
 
@@ -30,6 +31,20 @@ export async function setManageToken(token: string) {
 
 export async function clearManageToken() {
   (await cookies()).delete(MANAGE_COOKIE);
+}
+
+export async function getCompanyToken(): Promise<string | null> {
+  return (await cookies()).get(COMPANY_COOKIE)?.value ?? null;
+}
+
+export async function setCompanyToken(token: string) {
+  (await cookies()).set(COMPANY_COOKIE, token, {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+    path: "/",
+    maxAge: YEAR,
+  });
 }
 
 /** Read-only: returns null rather than minting one, so it is safe in a render. */

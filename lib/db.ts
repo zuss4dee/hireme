@@ -2,7 +2,7 @@ import "server-only";
 import { demoDB, demoRecomputeRanks, demoStats } from "./demo-store";
 import { MIN_BID } from "./money";
 import { adminClient, serverClient, supabaseConfigured } from "./supabase";
-import type { Bid, Candidate, CandidateStats, Interest, InterestType, PaymentType } from "./types";
+import type { Bid, Candidate, CandidateStats, Company, Interest, InterestType, Opportunity, OpportunityInterest, PaymentType, RemoteStatus } from "./types";
 
 /** Safe to read with the public key. contact_email and manage_token are
  *  deliberately absent — Postgres denies them to `anon` at column level. */
@@ -24,6 +24,9 @@ export function slugify(input: string) {
     .replace(/^-+|-+$/g, "")
     .slice(0, 32);
 }
+
+const COMPANY_COLS = "id,user_id,name,slug,logo,website,description,created_at";
+const OPPORTUNITY_COLS = "id,company_id,slug,title,description,skills,salary_range,location,remote_status,status,created_at";
 
 // ------------------------------------------------------------------ reads
 
@@ -187,6 +190,127 @@ export async function totalPot(): Promise<number> {
 
 export async function usernameTaken(username: string) {
   return Boolean(await getCandidateByUsername(username));
+}
+
+export type NewCompany = Omit<Company, "id" | "created_at" | "manage_token">;
+export type NewOpportunity = Omit<Opportunity, "id" | "created_at" | "company">;
+
+export async function createCompany(input: NewCompany): Promise<Company> {
+  if (!supabaseConfigured) {
+    const row = { ...input, id: uid("company"), manage_token: uid("company-token") + uid("company-token"), created_at: new Date().toISOString() };
+    demoDB().companies.push(row);
+    return row;
+  }
+  const { data, error } = await adminClient().from("companies").insert(input).select(`${COMPANY_COLS},manage_token`).single();
+  if (error) throw error;
+  return data as Company;
+}
+
+export async function getCompanyByToken(token: string): Promise<Company | null> {
+  if (!token) return null;
+  if (!supabaseConfigured) return demoDB().companies.find((company) => company.manage_token === token) ?? null;
+  const { data } = await adminClient().from("companies").select(`${COMPANY_COLS},manage_token`).eq("manage_token", token).maybeSingle();
+  return (data as Company) ?? null;
+}
+
+export async function getCompanyBySlug(slug: string): Promise<Company | null> {
+  if (!supabaseConfigured) return demoDB().companies.find((company) => company.slug === slug) ?? null;
+  const { data } = await (await serverClient()).from("companies").select(COMPANY_COLS).eq("slug", slug).maybeSingle();
+  return (data as Company) ?? null;
+}
+
+export async function listCompanies(limit = 50): Promise<Company[]> {
+  if (!supabaseConfigured) return demoDB().companies.slice().sort((a, b) => a.name.localeCompare(b.name)).slice(0, limit);
+  const { data, error } = await (await serverClient()).from("companies").select(COMPANY_COLS).order("name").limit(limit);
+  if (error) throw error;
+  return (data ?? []) as Company[];
+}
+
+export async function createOpportunity(input: NewOpportunity): Promise<Opportunity> {
+  if (!supabaseConfigured) {
+    const row = { ...input, id: uid("opportunity"), created_at: new Date().toISOString() };
+    demoDB().opportunities.push(row);
+    return row;
+  }
+  const { data, error } = await adminClient().from("opportunities").insert(input).select(OPPORTUNITY_COLS).single();
+  if (error) throw error;
+  return data as Opportunity;
+}
+
+export async function getOpportunityById(id: string): Promise<Opportunity | null> {
+  if (!supabaseConfigured) return demoDB().opportunities.find((opportunity) => opportunity.id === id) ?? null;
+  const { data } = await adminClient().from("opportunities").select(OPPORTUNITY_COLS).eq("id", id).maybeSingle();
+  return (data as Opportunity) ?? null;
+}
+
+
+export async function listOpportunities(limit = 50): Promise<Opportunity[]> {
+  if (!supabaseConfigured) {
+    return demoDB().opportunities.filter((opportunity) => opportunity.status === "open").slice().sort((a, b) => b.created_at.localeCompare(a.created_at)).slice(0, limit).map(withDemoCompany);
+  }
+  const { data, error } = await (await serverClient()).from("opportunities").select(`${OPPORTUNITY_COLS},companies(${COMPANY_COLS})`).eq("status", "open").order("created_at", { ascending: false }).limit(limit);
+  if (error) throw error;
+  return (data ?? []) as Opportunity[];
+}
+
+function withDemoCompany(opportunity: Opportunity): Opportunity {
+  return { ...opportunity, company: demoDB().companies.find((company) => company.id === opportunity.company_id) };
+}
+
+export async function getOpportunityBySlug(slug: string): Promise<Opportunity | null> {
+  if (!supabaseConfigured) {
+    const row = demoDB().opportunities.find((opportunity) => opportunity.slug === slug && opportunity.status === "open");
+    return row ? withDemoCompany(row) : null;
+  }
+  const { data } = await (await serverClient()).from("opportunities").select(`${OPPORTUNITY_COLS},companies(${COMPANY_COLS})`).eq("slug", slug).eq("status", "open").maybeSingle();
+  return (data as Opportunity) ?? null;
+}
+
+export async function listCompanyOpportunities(companyId: string): Promise<Opportunity[]> {
+  if (!supabaseConfigured) return demoDB().opportunities.filter((opportunity) => opportunity.company_id === companyId).sort((a, b) => b.created_at.localeCompare(a.created_at));
+  const { data } = await adminClient().from("opportunities").select(OPPORTUNITY_COLS).eq("company_id", companyId).order("created_at", { ascending: false });
+  return (data ?? []) as Opportunity[];
+}
+
+export async function listRecommendedCandidates(opportunity: Opportunity, limit = 6): Promise<Candidate[]> {
+  const candidates = await listCandidates({ limit: 100 });
+  const needed = new Set(opportunity.skills.map((skill) => skill.toLowerCase()));
+  return candidates
+    .map((candidate) => ({ candidate, score: candidate.skills.filter((skill) => needed.has(skill.toLowerCase())).length }))
+    .sort((a, b) => b.score - a.score || (a.candidate.rank ?? 999) - (b.candidate.rank ?? 999))
+    .slice(0, limit)
+    .map(({ candidate }) => candidate);
+}
+
+export async function addOpportunityInterest(opportunityId: string, candidateId: string): Promise<void> {
+  if (!supabaseConfigured) {
+    if (!demoDB().opportunity_interest.some((interest) => interest.opportunity_id === opportunityId && interest.candidate_id === candidateId)) {
+      demoDB().opportunity_interest.push({ id: uid("op-interest"), opportunity_id: opportunityId, candidate_id: candidateId, created_at: new Date().toISOString() });
+    }
+    return;
+  }
+  await adminClient().from("opportunity_interest").upsert({ opportunity_id: opportunityId, candidate_id: candidateId }, { onConflict: "opportunity_id,candidate_id" });
+}
+
+export async function listOpportunityInterests(candidateId: string): Promise<OpportunityInterest[]> {
+  if (!supabaseConfigured) return demoDB().opportunity_interest.filter((interest) => interest.candidate_id === candidateId).map((interest) => ({ ...interest, opportunity: getDemoOpportunity(interest.opportunity_id) }));
+  const { data } = await adminClient().from("opportunity_interest").select(`id,opportunity_id,candidate_id,created_at,opportunities(${OPPORTUNITY_COLS},companies(${COMPANY_COLS}))`).eq("candidate_id", candidateId);
+  return (data ?? []) as OpportunityInterest[];
+}
+
+export async function listCompanyOpportunityInterests(companyId: string): Promise<(OpportunityInterest & { candidate?: Candidate })[]> {
+  if (!supabaseConfigured) {
+    return demoDB().opportunity_interest
+      .filter((interest) => demoDB().opportunities.find((opportunity) => opportunity.id === interest.opportunity_id)?.company_id === companyId)
+      .map((interest) => ({ ...interest, opportunity: getDemoOpportunity(interest.opportunity_id), candidate: demoDB().candidates.find((candidate) => candidate.id === interest.candidate_id) }));
+  }
+  const { data } = await adminClient().from("opportunity_interest").select(`id,opportunity_id,candidate_id,created_at,opportunities!inner(company_id,title,slug),candidate_profiles(${CANDIDATE_COLS})`).eq("opportunities.company_id", companyId);
+  return ((data ?? []) as unknown as (OpportunityInterest & { candidate?: Candidate })[]).map((row) => ({ ...row, candidate: (row as unknown as { candidate_profiles?: Candidate }).candidate_profiles }));
+}
+
+function getDemoOpportunity(id: string) {
+  const opportunity = demoDB().opportunities.find((item) => item.id === id);
+  return opportunity ? withDemoCompany(opportunity) : undefined;
 }
 
 // ----------------------------------------------------------------- writes

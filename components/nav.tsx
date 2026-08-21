@@ -18,6 +18,12 @@ export async function Nav() {
         </Link>
 
         <nav className="ml-auto flex items-center gap-1 text-sm font-semibold sm:gap-2">
+          <Link href="/opportunities" className="hidden rounded-full px-3 py-2 text-muted transition hover:bg-black/[0.04] hover:text-fg sm:block">
+            Opportunities
+          </Link>
+          <Link href="/companies" className="hidden rounded-full px-3 py-2 text-muted transition hover:bg-black/[0.04] hover:text-fg sm:block">
+            Companies
+          </Link>
           <Link href="/recruiter" className="hidden rounded-full px-3 py-2 text-muted transition hover:bg-black/[0.04] hover:text-fg sm:block">
             Discover talent
           </Link>
