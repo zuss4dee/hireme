@@ -21,7 +21,7 @@ type Search = { session_id?: string; demo?: string; intent?: string; candidate?:
  * listen` running — so this page verifies the session and fulfils too.
  * `fulfil` is idempotent on the session id, so whichever lands first wins.
  */
-async function resolve(sp: Search): Promise<{ intent: PaymentType; amount: number; candidate: Candidate | null; company: string | null }> {
+async function resolve(sp: Search): Promise<{ intent: PaymentType; amount: number; candidate: Candidate | null; company: string | null; failed: boolean }> {
   if (sp.session_id && stripeConfigured) {
     const session = await stripe().checkout.sessions.retrieve(sp.session_id);
     const meta = session.metadata ?? {};
@@ -32,8 +32,9 @@ async function resolve(sp: Search): Promise<{ intent: PaymentType; amount: numbe
     // Mirrors the webhook's guard — never grant a rank the payment didn't cover.
     const paid = session.amount_subtotal ?? session.amount_total ?? 0;
 
+    let failed = false;
     if (session.payment_status === "paid" && candidateId && paid >= amount) {
-      await fulfil({
+      const result = await fulfil({
         intent,
         candidateId,
         userId: meta.user_id || null,
@@ -42,11 +43,13 @@ async function resolve(sp: Search): Promise<{ intent: PaymentType; amount: numbe
         message: meta.message || null,
         paymentRef: session.id,
       });
+      failed = !result.ok;
     }
 
     return {
       intent,
       amount,
+      failed,
       company: meta.company || null,
       candidate: candidateId ? await getCandidateForOwner(candidateId) : null,
     };
@@ -55,6 +58,7 @@ async function resolve(sp: Search): Promise<{ intent: PaymentType; amount: numbe
   return {
     intent: (sp.intent as PaymentType) ?? "bid",
     amount: Number(sp.amount ?? 0),
+    failed: false,
     company: sp.company || null,
     candidate: sp.candidate ? await getCandidateForOwner((await getCandidateByUsername(sp.candidate))?.id ?? "") : null,
   };
@@ -62,10 +66,34 @@ async function resolve(sp: Search): Promise<{ intent: PaymentType; amount: numbe
 
 export default async function SuccessPage({ searchParams }: { searchParams: Promise<Search> }) {
   const sp = await searchParams;
-  const { intent, amount, candidate, company } = await resolve(sp);
+  const { intent, amount, candidate, company, failed } = await resolve(sp);
   const isBid = intent === "bid";
   // Paid for, so it can be shown once — this page is the delivery.
   const contactEmail = !isBid && candidate ? await getContactEmail(candidate.id) : null;
+
+  // Never celebrate a payment whose effect didn't land — that is how someone
+  // ends up looking at "#null at $0" after being charged.
+  if (failed || (candidate && intent === "bid" && candidate.current_bid <= 0)) {
+    return (
+      <div className="card mx-auto mt-12 max-w-lg p-8 text-center">
+        <p className="text-sm font-black uppercase tracking-widest text-pink">Payment received</p>
+        <h1 className="mt-3 text-2xl font-black tracking-tighter">We couldn&apos;t apply it yet.</h1>
+        <p className="mt-3 text-muted">
+          Your card was charged {usd(amount)} and we have the receipt, but something went wrong
+          putting you on the board. Nothing is lost — reload this page in a minute and it will
+          finish on its own.
+        </p>
+        <p className="mt-3 text-sm text-muted">
+          If it still hasn&apos;t worked, email us with this reference and we&apos;ll fix it or
+          refund you:
+        </p>
+        <code className="mt-2 block truncate rounded-lg border border-line bg-surface-2 px-3 py-2 font-mono text-xs">
+          {sp.session_id ?? "no-reference"}
+        </code>
+        <Link href="/dashboard" className="btn btn-ghost mt-6">Go to my dashboard</Link>
+      </div>
+    );
+  }
 
   if (!candidate) {
     return (

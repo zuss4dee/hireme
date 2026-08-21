@@ -7,7 +7,7 @@ import type { Bid, Candidate, CandidateStats, Interest } from "./types";
  * Next's dev-server module reloads.
  */
 type ViewRow = { candidate_id: string; viewer_id: string | null; viewer_role: string; source: string; created_at: string };
-type PaymentRow = { id: string; user_id: string | null; candidate_id: string | null; amount: number; payment_type: string; provider_payment_id: string | null; created_at: string };
+type PaymentRow = { id: string; user_id: string | null; candidate_id: string | null; amount: number; payment_type: string; provider_payment_id: string | null; fulfilled_at?: string | null; created_at: string };
 
 type DemoDB = {
   candidates: Candidate[];

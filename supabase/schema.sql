@@ -72,6 +72,7 @@ create table if not exists public.payments (
   payment_type text not null check (payment_type in ('bid','unlock','interview','hire')),
   provider_payment_id text unique,   -- Stripe checkout session id
   status       text not null default 'paid',
+  fulfilled_at timestamptz,               -- set only once the effect landed
   created_at   timestamptz not null default now()
 );
 
@@ -99,7 +100,7 @@ $$;
 
 -- Atomic outbid: raises the bid, logs it, re-ranks. Rejects bids that are not
 -- strictly higher than the candidate's own current bid.
-create or replace function public.place_bid(p_candidate_id uuid, p_user_id uuid, p_amount integer)
+create or replace function public.place_bid(p_candidate_id uuid, p_user_id text, p_amount integer)
 returns public.candidate_profiles
 language plpgsql security definer set search_path = public as $$
 declare result public.candidate_profiles;
@@ -166,9 +167,9 @@ grant select (
 -- SECURITY DEFINER functions are EXECUTE-able by PUBLIC by default, which
 -- exposes them over PostgREST to the anon key. Payment happens server-side,
 -- so only the service role may move money-bearing state.
-revoke execute on function public.place_bid(uuid, uuid, integer) from public, anon, authenticated;
+revoke execute on function public.place_bid(uuid, text, integer) from public, anon, authenticated;
 revoke execute on function public.recompute_ranks()              from public, anon, authenticated;
 revoke execute on function public.trg_recompute_ranks()          from public, anon, authenticated;
 
-grant execute on function public.place_bid(uuid, uuid, integer) to service_role;
+grant execute on function public.place_bid(uuid, text, integer) to service_role;
 grant execute on function public.recompute_ranks()              to service_role;

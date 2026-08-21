@@ -32,6 +32,10 @@
   html {
     background: var(--color-bg);
     color-scheme: light;
+    /* `clip` rather than `hidden`: it stops stray horizontal scroll without
+       breaking position: sticky the way overflow-hidden does. */
+    overflow-x: clip;
+    -webkit-text-size-adjust: 100%;
   }
   body {
     background:
@@ -42,6 +46,16 @@
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
     min-height: 100dvh;
+    overflow-x: clip;
+    /* Long emails, URLs and unbroken words must never widen the page. */
+    overflow-wrap: anywhere;
+    /* No grey flash on tap — makes it feel like an app rather than a webpage. */
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* Notched phones: keep content clear of the rounded corners and home bar. */
+  body > footer {
+    padding-bottom: max(2.5rem, env(safe-area-inset-bottom));
   }
   ::selection {
     background: var(--color-lime);
@@ -107,7 +121,9 @@
     border: 1px solid var(--color-line);
     border-radius: 0.85rem;
     padding: 0.75rem 0.95rem;
-    font-size: 0.95rem;
+    /* 16px is the floor. Anything smaller makes iOS Safari zoom the page on
+       focus, and once zoomed the whole site pans sideways. */
+    font-size: 1rem;
     color: var(--color-fg);
     outline: none;
     transition: border-color 0.12s ease, box-shadow 0.12s ease;
@@ -138,6 +154,31 @@
     padding: 0.2rem 0.6rem;
     font-size: 0.75rem;
     color: #3f3f52;
+  }
+}
+
+/* Touch devices only, so desktop stays visually tight. */
+@media (pointer: coarse) {
+  .btn {
+    min-height: 44px;
+  }
+  a.chip,
+  button.chip,
+  label.chip {
+    min-height: 40px;
+    padding-left: 0.85rem;
+    padding-right: 0.85rem;
+  }
+  /* Checkboxes are the one control you cannot afford to miss. */
+  input[type="checkbox"] {
+    min-width: 22px;
+    min-height: 22px;
+  }
+}
+
+@media (min-width: 640px) {
+  .field {
+    font-size: 0.95rem;
   }
 }
 

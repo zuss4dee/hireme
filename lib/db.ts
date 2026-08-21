@@ -287,17 +287,18 @@ export async function recordInterest(args: {
   return (data as Interest) ?? row;
 }
 
-/** Idempotent on provider_payment_id — the webhook and the success page both call this. */
+/** Records the payment and reports whether its effect has already been applied. */
 export async function recordPayment(args: {
   userId: string | null;
   candidateId: string | null;
   amount: number;
   paymentType: PaymentType;
   paymentRef: string | null;
-}): Promise<{ alreadyRecorded: boolean }> {
+}): Promise<{ alreadyFulfilled: boolean }> {
   if (!supabaseConfigured) {
     const db = demoDB();
-    if (args.paymentRef && db.payments.some((p) => p.provider_payment_id === args.paymentRef)) return { alreadyRecorded: true };
+    const seen = args.paymentRef ? db.payments.find((p) => p.provider_payment_id === args.paymentRef) : undefined;
+    if (seen) return { alreadyFulfilled: Boolean(seen.fulfilled_at) };
     db.payments.push({
       id: uid("pay"),
       user_id: args.userId,
@@ -307,13 +308,19 @@ export async function recordPayment(args: {
       provider_payment_id: args.paymentRef,
       created_at: new Date().toISOString(),
     });
-    return { alreadyRecorded: false };
+    return { alreadyFulfilled: false };
   }
 
   const sb = adminClient();
   if (args.paymentRef) {
-    const { data: existing } = await sb.from("payments").select("id").eq("provider_payment_id", args.paymentRef).maybeSingle();
-    if (existing) return { alreadyRecorded: true };
+    const { data: existing } = await sb
+      .from("payments")
+      .select("id,fulfilled_at")
+      .eq("provider_payment_id", args.paymentRef)
+      .maybeSingle();
+    // A payment row on its own proves nothing — only fulfilled_at does. Without
+    // this distinction a failed effect is masked forever by its own receipt.
+    if (existing) return { alreadyFulfilled: Boolean((existing as { fulfilled_at: string | null }).fulfilled_at) };
   }
   await sb.from("payments").insert({
     user_id: args.userId,
@@ -322,7 +329,19 @@ export async function recordPayment(args: {
     payment_type: args.paymentType,
     provider_payment_id: args.paymentRef,
   });
-  return { alreadyRecorded: false };
+  return { alreadyFulfilled: false };
+}
+
+/** Marks a payment's effect as applied. Only called once the work succeeded. */
+export async function markFulfilled(paymentRef: string | null): Promise<void> {
+  if (!paymentRef) return;
+  if (!supabaseConfigured) {
+    const row = demoDB().payments.find((p) => p.provider_payment_id === paymentRef);
+    if (row) row.fulfilled_at = new Date().toISOString();
+    return;
+  }
+  const sb = adminClient();
+  await sb.from("payments").update({ fulfilled_at: new Date().toISOString() }).eq("provider_payment_id", paymentRef);
 }
 
 export async function hasUnlocked(userId: string | null, candidateId: string) {
