@@ -3,7 +3,7 @@ import Link from "next/link";
 import { Avatar } from "@/components/avatar";
 import { ShareButton } from "@/components/share-button";
 import { Stat } from "@/components/stat";
-import { boardBids, getRival, getStats, listInterest, listOpportunityInterests } from "@/lib/db";
+import { boardBids, getRival, getStats, listInterest } from "@/lib/db";
 import { compactNumber, usd, priceToBeat } from "@/lib/money";
 import { getMyListing } from "@/lib/owner";
 import { AVAILABILITY_LABEL, type Availability } from "@/lib/types";
@@ -44,7 +44,7 @@ export default async function DashboardPage({
     );
   }
 
-  const [stats, rival, interest, bids, opportunityInterests] = await Promise.all([getStats(me.id), getRival(me), listInterest(me.id), boardBids(), listOpportunityInterests(me.id)]);
+  const [stats, rival, interest, bids] = await Promise.all([getStats(me.id), getRival(me), listInterest(me.id), boardBids()]);
   const behindYou = Math.max(0, bids.length - (me.rank ?? bids.length));
   const target = rival ? priceToBeat(rival.current_bid) : priceToBeat(me.current_bid);
   const isLive = me.current_bid > 0;
@@ -157,20 +157,6 @@ export default async function DashboardPage({
                 </li>
               );
             })}
-          </ul>
-        )}
-      </section>
-
-      <section className="card p-6">
-        <div className="flex items-center justify-between">
-          <h2 className="text-sm font-black uppercase tracking-widest text-muted">Opportunities you raised your hand for</h2>
-          <Link href="/opportunities" className="text-sm font-bold text-money hover:underline">Browse opportunities</Link>
-        </div>
-        {opportunityInterests.length === 0 ? (
-          <p className="mt-4 text-sm text-muted">Your opportunity signals will appear here. Companies can discover you from the leaderboard and invite you separately.</p>
-        ) : (
-          <ul className="mt-4 flex flex-col divide-y divide-line">
-            {opportunityInterests.map((interest) => interest.opportunity ? <li key={interest.id} className="py-3"><Link href={`/opportunity/${interest.opportunity.slug}`} className="font-bold hover:text-money">{interest.opportunity.title}</Link><p className="text-sm text-muted">{interest.opportunity.company?.name ?? "A company"} · You raised your hand</p></li> : null)}
           </ul>
         )}
       </section>

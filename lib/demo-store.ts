@@ -1,5 +1,5 @@
 import { SEEDS, seedCandidates } from "./demo-data";
-import type { Bid, Candidate, CandidateStats, Company, Interest, Opportunity, OpportunityInterest } from "./types";
+import type { Bid, Candidate, CandidateStats, Interest } from "./types";
 
 /**
  * In-memory database used when Supabase credentials aren't configured, so the
@@ -17,9 +17,6 @@ type DemoDB = {
   interest: Interest[];
   payments: PaymentRow[];
   site_visits?: SiteVisitRow[];
-  companies: Company[];
-  opportunities: Opportunity[];
-  opportunity_interest: OpportunityInterest[];
   baseline: Record<string, { views: number; recruiter_views: number; portfolio_clicks: number }>;
 };
 
@@ -54,7 +51,7 @@ function build(): DemoDB {
     });
   });
 
-  return { candidates, bids, views: [], interest, payments: [], site_visits: [], companies: [], opportunities: [], opportunity_interest: [], baseline };
+  return { candidates, bids, views: [], interest, payments: [], site_visits: [], baseline };
 }
 
 const g = globalThis as unknown as { __hiremeDemoDB?: DemoDB };

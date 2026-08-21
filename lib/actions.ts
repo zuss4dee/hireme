@@ -3,10 +3,10 @@
 import { createHash } from "node:crypto";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
-import { addOpportunityInterest, createCandidate, createCompany, createOpportunity, getCompanyByToken, recordView, slugify, usernameTaken } from "./db";
+import { createCandidate, recordView, slugify, usernameTaken } from "./db";
 import { parseSkills } from "./skills";
 import { MIN_BID, parseDollars, usd } from "./money";
-import { ensureVisitorId, getCompanyToken, getVisitorId, setCompanyToken, setManageToken } from "./session";
+import { ensureVisitorId, getVisitorId, setManageToken } from "./session";
 import { getMyListing } from "./owner";
 import type { Availability } from "./types";
 
@@ -93,52 +93,5 @@ export async function createProfileAction(_prev: FormState, formData: FormData):
 /** Fired from the profile page when someone opens a candidate's portfolio. */
 export async function trackPortfolioClick(candidateId: string) {
   await recordView({ candidateId, viewerId: await getVisitorId(), viewerRole: "anon", source: "portfolio_click" });
-}
-
-function text(value: FormDataEntryValue | null) {
-  return String(value ?? "").trim();
-}
-
-export async function createCompanyAction(_prev: FormState, formData: FormData): Promise<FormState> {
-  const name = text(formData.get("name"));
-  if (name.length < 2) return { error: "Add your company name." };
-  const company = await createCompany({
-    user_id: await ensureVisitorId(),
-    name,
-    slug: slugify(name) || `company-${Date.now()}`,
-    logo: url(formData.get("logo")),
-    website: url(formData.get("website")),
-    description: text(formData.get("description")) || null,
-  });
-  if (company.manage_token) await setCompanyToken(company.manage_token);
-  redirect("/company");
-}
-
-export async function createOpportunityAction(_prev: FormState, formData: FormData): Promise<FormState> {
-  const company = await getCompanyByToken((await getCompanyToken()) ?? "");
-  if (!company) return { error: "Create a company profile first." };
-  const title = text(formData.get("title"));
-  const description = text(formData.get("description"));
-  if (title.length < 2 || description.length < 20) return { error: "Add a clear role and a useful description." };
-  const slugBase = slugify(`${company.name}-${title}`) || `opportunity-${Date.now()}`;
-  const created = await createOpportunity({
-    company_id: company.id,
-    slug: `${slugBase}-${Date.now().toString(36)}`,
-    title,
-    description,
-    skills: parseSkills(text(formData.get("skills"))),
-    salary_range: text(formData.get("salary_range")) || null,
-    location: text(formData.get("location")) || null,
-    remote_status: (text(formData.get("remote_status")) || "remote") as "remote" | "hybrid" | "onsite",
-    status: "open",
-  });
-  redirect("/company");
-}
-
-export async function expressOpportunityInterest(opportunityId: string): Promise<FormState> {
-  const candidate = await getMyListing();
-  if (!candidate) return { error: "Create your profile first to show interest." };
-  await addOpportunityInterest(opportunityId, candidate.id);
-  return {};
 }
 

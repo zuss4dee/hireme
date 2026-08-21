@@ -2,43 +2,6 @@ export type Availability = "open" | "passive" | "not_looking" | "hired";
 export type InterestType = "unlock" | "interview" | "hire";
 export type PaymentType = "bid" | InterestType;
 
-export type RemoteStatus = "remote" | "hybrid" | "onsite";
-
-export type Company = {
-  id: string;
-  user_id: string;
-  name: string;
-  slug: string;
-  logo: string | null;
-  website: string | null;
-  description: string | null;
-  manage_token?: string;
-  created_at: string;
-};
-
-export type Opportunity = {
-  id: string;
-  company_id: string;
-  slug: string;
-  title: string;
-  description: string;
-  skills: string[];
-  salary_range: string | null;
-  location: string | null;
-  remote_status: RemoteStatus;
-  status: "open" | "closed";
-  created_at: string;
-  company?: Company;
-};
-
-export type OpportunityInterest = {
-  id: string;
-  opportunity_id: string;
-  candidate_id: string;
-  created_at: string;
-  opportunity?: Opportunity;
-};
-
 export type Candidate = {
   id: string;
   user_id: string;

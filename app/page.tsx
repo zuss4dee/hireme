@@ -4,7 +4,7 @@ import { Leaderboard } from "@/components/leaderboard";
 import { ClaimBar } from "@/components/claim-bar";
 import { Search } from "@/components/search";
 import { Ticker } from "@/components/ticker";
-import { boardBids, getSiteVisits, listCandidates, listOpportunities, recentActivity, recordSiteVisit } from "@/lib/db";
+import { boardBids, getSiteVisits, listCandidates, recentActivity, recordSiteVisit } from "@/lib/db";
 import { compactNumber, usd } from "@/lib/money";
 
 export const dynamic = "force-dynamic";
@@ -12,7 +12,7 @@ export const dynamic = "force-dynamic";
 export default async function HomePage({ searchParams }: { searchParams: Promise<{ q?: string }> }) {
   const { q } = await searchParams;
   await recordSiteVisit();
-  const [candidates, activity, siteVisits, bids, opportunities] = await Promise.all([listCandidates({ q }), recentActivity(), getSiteVisits(), boardBids(), listOpportunities(3)]);
+  const [candidates, activity, siteVisits, bids] = await Promise.all([listCandidates({ q }), recentActivity(), getSiteVisits(), boardBids()]);
   const topBid = bids[0] ?? 0;
 
   return (
@@ -52,15 +52,6 @@ export default async function HomePage({ searchParams }: { searchParams: Promise
           ))}
         </div>
       </section>
-
-      {opportunities.length > 0 ? (
-        <section className="flex flex-col gap-4">
-          <div className="flex items-end justify-between gap-4"><div><p className="text-xs font-black uppercase tracking-widest text-pink">Companies looking for talent</p><h2 className="mt-1 text-2xl font-black tracking-tight">Latest opportunities</h2></div><Link href="/opportunities" className="text-sm font-bold text-money hover:underline">See all →</Link></div>
-          <div className="grid gap-3 md:grid-cols-3">
-            {opportunities.map((opportunity) => <Link key={opportunity.id} href={`/opportunity/${opportunity.slug}`} className="card p-5 hover:border-pink/40"><p className="text-sm font-bold text-muted">{opportunity.company?.name}</p><h3 className="mt-1 font-black">{opportunity.title}</h3><p className="mt-3 text-sm text-muted">{opportunity.remote_status} · {opportunity.location || "Location flexible"}</p></Link>)}
-          </div>
-        </section>
-      ) : null}
 
       <Ticker items={activity} />
 

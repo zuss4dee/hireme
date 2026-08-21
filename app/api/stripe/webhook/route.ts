@@ -31,12 +31,13 @@ export async function POST(req: Request) {
     const session = event.data.object;
     const meta = session.metadata ?? {};
     const candidateId = meta.candidate_id ?? "";
-    const expected = Number(meta.amount ?? 0);
-    const paid = session.amount_subtotal ?? session.amount_total ?? 0;
 
     if (session.payment_status === "paid" && candidateId) {
       // What we asked for vs. what actually cleared. Never grant a rank the
       // payment didn't cover.
+      const expected = Number(meta.amount ?? 0);
+      const paid = session.amount_subtotal ?? session.amount_total ?? 0;
+
       if (paid < expected) {
         console.error("[stripe] underpaid session, refusing to fulfil", { id: session.id, expected, paid });
         return NextResponse.json({ received: true, ignored: "underpaid" });

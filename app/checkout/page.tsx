@@ -7,7 +7,7 @@ import { boardBids, getCandidateByUsername, getRival, listCandidates } from "@/l
 import { usd, priceToBeat, MIN_BID, UNLOCK_PRICE } from "@/lib/money";
 import { getMyListing } from "@/lib/owner";
 import { stripeConfigured } from "@/lib/stripe";
-import type { InterestType, PaymentType } from "@/lib/types";
+import type { PaymentType } from "@/lib/types";
 
 export const metadata: Metadata = { title: "Checkout" };
 export const dynamic = "force-dynamic";
@@ -23,7 +23,7 @@ const RECRUITER_COPY: Record<Exclude<PaymentType, "bid">, { title: string; blurb
 export default async function CheckoutPage({
   searchParams,
 }: {
-  searchParams: Promise<{ intent?: string; beat?: string; candidate?: string; opportunity?: string; welcome?: string; amount?: string }>;
+  searchParams: Promise<{ intent?: string; beat?: string; candidate?: string; welcome?: string; amount?: string }>;
 }) {
   const sp = await searchParams;
   const intent = (INTENTS.includes(sp.intent as PaymentType) ? sp.intent : "bid") as PaymentType;
@@ -135,7 +135,7 @@ export default async function CheckoutPage({
   // ------------------------------------------------------- recruiter flow
   const candidate = sp.candidate ? await getCandidateByUsername(sp.candidate) : null;
   if (!candidate) notFound();
-  const copy = RECRUITER_COPY[intent as InterestType];
+  const copy = RECRUITER_COPY[intent as Exclude<PaymentType, "bid">];
 
   return (
     <div className="mx-auto flex max-w-2xl flex-col gap-6 pt-6">
