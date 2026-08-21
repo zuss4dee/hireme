@@ -198,3 +198,15 @@ $$;
 drop trigger if exists on_auth_user_created on auth.users;
 create trigger on_auth_user_created
 after insert on auth.users for each row execute function public.handle_new_user();
+
+-- ------------------------------------------------------- function grants
+-- SECURITY DEFINER functions are EXECUTE-able by PUBLIC by default, which
+-- exposes them over PostgREST to the anon key. Payment happens server-side,
+-- so only the service role may move money-bearing state.
+revoke execute on function public.place_bid(uuid, uuid, integer) from public, anon, authenticated;
+revoke execute on function public.recompute_ranks()              from public, anon, authenticated;
+revoke execute on function public.trg_recompute_ranks()          from public, anon, authenticated;
+revoke execute on function public.handle_new_user()              from public, anon, authenticated;
+
+grant execute on function public.place_bid(uuid, uuid, integer) to service_role;
+grant execute on function public.recompute_ranks()              to service_role;

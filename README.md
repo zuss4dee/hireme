@@ -91,6 +91,15 @@ A hidden listing drops out of the board, search, recruiter filters, the homepage
 and the total, holds no rank, and the ranks below it close up. The owner sees a notice on their
 dashboard and profile explaining what happened.
 
+## Security note
+
+`place_bid` and `recompute_ranks` are `SECURITY DEFINER`, and Postgres grants `EXECUTE` to
+`PUBLIC` by default — which exposes them over PostgREST to the **anon key that ships in the
+browser bundle**. Left alone, anyone could `POST /rest/v1/rpc/place_bid` and claim rank #1
+without paying. `004_function_grants.sql` revokes that and grants execute to `service_role`
+only, which is the role the server uses after a payment clears. Re-run
+`get_advisors`/the database linter after any change that adds a `SECURITY DEFINER` function.
+
 ## Notes
 
 **Skills accept anything.** `lib/skills.ts` splits on commas, newlines, bullets, pipes,
