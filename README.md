@@ -27,9 +27,9 @@ outbid, unlock, dashboard analytics) is clickable straight away.
    `supabase/migrations/001_polar.sql` too.
 3. **Polar** — create **one** one-time product in the dashboard (sandbox.polar.sh while
    testing) and put its id in `POLAR_PRODUCT_ID`. Its catalog price is irrelevant: every
-   checkout sends an **ad-hoc GBP price**, so the amount is always the one the server
+   checkout sends an **ad-hoc USD price**, so the amount is always the one the server
    computed. That matters — with pay-what-you-want pricing the buyer can edit the amount on
-   Polar's page, which would let someone claim a £151 rank for £1.
+   Polar's page, which would let someone claim a $151 rank for $1.
 
    Then add `POLAR_ACCESS_TOKEN`, leave `POLAR_SERVER=sandbox` until you go live, and add a
    webhook pointing at `/api/polar/webhook` subscribed to `order.paid`. Paste its signing
@@ -52,12 +52,12 @@ when its token and product id are present. Either can be enabled independently.
 
 ## How the money works
 
-Everything is stored in **pence** (`current_bid: 4800` = £48).
+Everything is stored in **cents** (`current_bid: 4800` = $48).
 
 - **Bid** — a candidate pays to raise their own bid. `place_bid()` updates the bid, logs the
   row, and re-ranks the whole board in one transaction. The minimum is always one pound more
   than the person above.
-- **Unlock / interview / hire** — a recruiter pays £25 (`UNLOCK_PRICE`) to reveal contact
+- **Unlock / interview / hire** — a recruiter pays $25 (`UNLOCK_PRICE`) to reveal contact
   details. A `recruiter_interest` row lands on the candidate's dashboard.
 
 Both bids and unlocks are ad-hoc fixed prices created with the checkout, so the server is

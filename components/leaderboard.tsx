@@ -1,24 +1,24 @@
 import Link from "next/link";
 import { Avatar } from "./avatar";
-import { gbp, priceToBeat } from "@/lib/money";
+import { usd, priceToBeat } from "@/lib/money";
 import { AVAILABILITY_LABEL, type Candidate } from "@/lib/types";
 
 const MEDAL: Record<number, string> = { 1: "🥇", 2: "🥈", 3: "🥉" };
 
 function rankStyles(rank: number) {
   if (rank === 1) return "bg-gold/15 text-gold border-gold/40";
-  if (rank === 2) return "bg-white/10 text-white border-white/25";
+  if (rank === 2) return "bg-black/[0.06] text-fg border-line";
   if (rank === 3) return "bg-pink/15 text-pink border-pink/40";
-  return "bg-white/5 text-muted border-line";
+  return "bg-black/[0.04] text-muted border-line";
 }
 
 export function LeaderboardRow({ c, index = 0 }: { c: Candidate; index?: number }) {
   const rank = c.rank ?? index + 1;
-  const dot = c.availability === "open" ? "bg-lime" : c.availability === "hired" ? "bg-pink" : "bg-gold";
+  const dot = c.availability === "open" ? "bg-money" : c.availability === "hired" ? "bg-pink" : "bg-gold";
 
   return (
     <li
-      className="rise group card relative flex items-center gap-2.5 p-3 transition hover:border-lime/40 hover:bg-white/[0.06] sm:gap-4 sm:p-4"
+      className="rise group card relative flex items-center gap-2.5 p-3 transition hover:border-lime/40 hover:bg-black/[0.03] sm:gap-4 sm:p-4"
       style={{ animationDelay: `${Math.min(index, 12) * 25}ms` }}
     >
       <div className={`grid h-8 w-8 shrink-0 place-items-center rounded-xl border text-sm font-black tabular-nums sm:h-11 sm:w-11 sm:text-base ${rankStyles(rank)}`}>
@@ -29,7 +29,7 @@ export function LeaderboardRow({ c, index = 0 }: { c: Candidate; index?: number 
         <Avatar name={c.name} src={c.photo} size={44} className="!h-10 !w-10 sm:!h-11 sm:!w-11" />
         <div className="min-w-0">
           <div className="flex items-center gap-2">
-            <span className="truncate font-bold tracking-tight group-hover:text-lime">{c.name}</span>
+            <span className="truncate font-bold tracking-tight group-hover:text-money">{c.name}</span>
             <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${dot}`} title={AVAILABILITY_LABEL[c.availability]} />
           </div>
           <div className="truncate text-sm text-muted">
@@ -47,14 +47,14 @@ export function LeaderboardRow({ c, index = 0 }: { c: Candidate; index?: number 
 
       <div className="ml-auto flex shrink-0 items-center gap-2 sm:gap-3">
         <div className="text-right">
-          <div className="text-base font-black tabular-nums text-lime sm:text-lg">{gbp(c.current_bid)}</div>
+          <div className="text-base font-black tabular-nums text-money sm:text-lg">{usd(c.current_bid)}</div>
           {/* the caption is wider than the number — on phones it would squeeze the name */}
           <div className="hidden text-[10px] font-semibold uppercase tracking-wider text-muted sm:block">current bid</div>
         </div>
         <Link
           href={`/checkout?intent=bid&beat=${c.username}`}
           className="btn btn-ghost px-2.5 py-1.5 text-xs sm:px-3 sm:py-2 sm:text-sm"
-          title={`Take this spot for ${gbp(priceToBeat(c.current_bid))}`}
+          title={`Take this spot for ${usd(priceToBeat(c.current_bid))}`}
         >
           Outbid
         </Link>

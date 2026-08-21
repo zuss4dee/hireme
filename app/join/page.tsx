@@ -21,7 +21,7 @@ export default async function JoinPage() {
     <div className="flex flex-col gap-8 pt-6">
       <header className="text-center">
         <h1 className="text-4xl font-black tracking-tighter sm:text-5xl">
-          Put yourself <span className="text-lime">on the board</span>
+          Put yourself <span className="text-money">on the board</span>
         </h1>
         <p className="mx-auto mt-3 max-w-lg text-muted">
           Two minutes. No CV, no cover letter, no “tell us about a time you failed”.
@@ -31,7 +31,7 @@ export default async function JoinPage() {
       <JoinForm />
 
       <p className="text-center text-sm text-muted">
-        Just here to hire someone? <Link href="/recruiter" className="font-semibold text-lime hover:underline">Browse the board</Link>
+        Just here to hire someone? <Link href="/recruiter" className="font-semibold text-money hover:underline">Browse the board</Link>
       </p>
     </div>
   );

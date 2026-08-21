@@ -16,7 +16,7 @@ export type Candidate = {
   github_url: string | null;
   twitter_url: string | null;
   skills: string[];
-  /** pence */
+  /** cents */
   current_bid: number;
   rank: number | null;
   availability: Availability;

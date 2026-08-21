@@ -1,28 +1,28 @@
-/** Everything is stored in pence. Everything is displayed in pounds. */
-export const UNLOCK_PRICE = 2500; // £25 to unlock a candidate's contact details
+/** Everything is stored in cents. Everything is displayed in dollars. */
+export const UNLOCK_PRICE = 2500; // $25 to unlock a candidate's contact details
 
-export function gbp(pence: number, opts: { decimals?: boolean } = {}) {
-  const pounds = pence / 100;
-  const decimals = opts.decimals ?? !Number.isInteger(pounds);
-  return new Intl.NumberFormat("en-GB", {
+export function usd(cents: number, opts: { decimals?: boolean } = {}) {
+  const dollars = cents / 100;
+  const decimals = opts.decimals ?? !Number.isInteger(dollars);
+  return new Intl.NumberFormat("en-US", {
     style: "currency",
-    currency: "GBP",
+    currency: "USD",
     minimumFractionDigits: decimals ? 2 : 0,
     maximumFractionDigits: decimals ? 2 : 0,
-  }).format(pounds);
+  }).format(dollars);
 }
 
 /** The cheapest bid that takes the spot above you. */
 export function priceToBeat(targetBid: number) {
-  return targetBid + 100; // one pound more
+  return targetBid + 100; // one dollar more
 }
 
-export function parsePounds(input: string | number | null | undefined): number {
+export function parseDollars(input: string | number | null | undefined): number {
   const n = typeof input === "number" ? input : Number.parseFloat(String(input ?? "").replace(/[^0-9.]/g, ""));
   if (!Number.isFinite(n) || n <= 0) return 0;
   return Math.round(n * 100);
 }
 
 export function compactNumber(n: number) {
-  return new Intl.NumberFormat("en-GB", { notation: "compact", maximumFractionDigits: 1 }).format(n);
+  return new Intl.NumberFormat("en-US", { notation: "compact", maximumFractionDigits: 1 }).format(n);
 }

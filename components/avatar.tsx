@@ -35,7 +35,7 @@ export function Avatar({
 
   return (
     <span
-      className={`relative inline-flex shrink-0 items-center justify-center overflow-hidden rounded-full border border-white/10 font-black text-ink ${className}`}
+      className={`relative inline-flex shrink-0 items-center justify-center overflow-hidden rounded-full border border-black/10 font-black text-ink ${className}`}
       style={{ width: size, height: size, background: GRADIENTS[seed], fontSize: size * 0.36 }}
       aria-hidden={false}
     >

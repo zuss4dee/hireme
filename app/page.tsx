@@ -4,7 +4,7 @@ import { Leaderboard } from "@/components/leaderboard";
 import { Search } from "@/components/search";
 import { Ticker } from "@/components/ticker";
 import { listCandidates, recentActivity, totalPot } from "@/lib/db";
-import { compactNumber, gbp } from "@/lib/money";
+import { compactNumber, usd } from "@/lib/money";
 
 export const dynamic = "force-dynamic";
 
@@ -16,13 +16,13 @@ export default async function HomePage({ searchParams }: { searchParams: Promise
   return (
     <div className="flex flex-col gap-8">
       <section className="pt-6 text-center sm:pt-12">
-        <span className="chip mx-auto border-lime/30 bg-lime/10 text-lime">
-          <span className="h-1.5 w-1.5 rounded-full bg-lime pulse-ring" /> live auction · {candidates.length} people on the board
+        <span className="chip mx-auto border-lime/30 bg-lime/10 text-money">
+          <span className="h-1.5 w-1.5 rounded-full bg-money pulse-ring" /> live auction · {candidates.length} people on the board
         </span>
         <h1 className="mx-auto mt-5 max-w-3xl text-4xl font-black leading-[0.95] tracking-tighter sm:text-6xl md:text-7xl">
           Who deserves
           <br />
-          to be <span className="text-lime">hired?</span>
+          to be <span className="text-money">hired?</span>
         </h1>
         <p className="mx-auto mt-5 max-w-xl text-base text-muted sm:text-lg">
           Pay to climb the board. Get seen by recruiters. No CVs, no applications, no ATS black hole.
@@ -38,8 +38,8 @@ export default async function HomePage({ searchParams }: { searchParams: Promise
         </div>
         <div className="mx-auto mt-8 grid max-w-2xl grid-cols-3 gap-3 text-center">
           {[
-            { label: "top bid", value: gbp(topBid), accent: "text-gold" },
-            { label: "total on the board", value: gbp(pot), accent: "text-lime" },
+            { label: "top bid", value: usd(topBid), accent: "text-gold" },
+            { label: "total on the board", value: usd(pot), accent: "text-money" },
             { label: "recruiter views", value: compactNumber(4212), accent: "text-pink" },
           ].map((s) => (
             <div key={s.label} className="card px-3 py-3">
@@ -62,7 +62,7 @@ export default async function HomePage({ searchParams }: { searchParams: Promise
           </div>
         </div>
 
-        <Suspense fallback={<div className="h-12 rounded-full border border-line bg-white/[0.03]" />}>
+        <Suspense fallback={<div className="h-12 rounded-full border border-line bg-surface-2" />}>
           <Search />
         </Suspense>
 
@@ -76,7 +76,7 @@ export default async function HomePage({ searchParams }: { searchParams: Promise
           Nobody is reading your CV.
         </h3>
         <p className="relative mx-auto mt-3 max-w-lg text-muted">
-          They&apos;re reading this board. {gbp(topBid + 100)} puts you at number one right now.
+          They&apos;re reading this board. {usd(topBid + 100)} puts you at number one right now.
         </p>
         <Link href="/join" className="btn btn-primary relative mt-6">
           Take the top spot

@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { gbp } from "@/lib/money";
+import { usd } from "@/lib/money";
 import type { PaymentType } from "@/lib/types";
 
 export function CheckoutForm({
@@ -38,7 +38,7 @@ export function CheckoutForm({
   async function pay() {
     setError(null);
     if (tooLow) {
-      setError(`Minimum is ${gbp(minimum)} — you have to actually beat them.`);
+      setError(`Minimum is ${usd(minimum)} — you have to actually beat them.`);
       return;
     }
     setBusy(true);
@@ -70,7 +70,7 @@ export function CheckoutForm({
         <div className="card p-5">
           <label className="label" htmlFor="amount">Your bid</label>
           <div className="relative">
-            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-2xl font-black text-lime">£</span>
+            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-2xl font-black text-money">$</span>
             <input
               id="amount"
               type="number"
@@ -82,7 +82,7 @@ export function CheckoutForm({
             />
           </div>
           <p className={`mt-2 text-xs ${tooLow ? "text-pink" : "text-muted"}`}>
-            {minimumHint ?? `Minimum ${gbp(minimum)} — anything lower doesn't move you.`}
+            {minimumHint ?? `Minimum ${usd(minimum)} — anything lower doesn't move you.`}
           </p>
 
           {presets.length > 0 ? (
@@ -92,10 +92,10 @@ export function CheckoutForm({
                   key={p.label}
                   onClick={() => setValue(p.amount)}
                   className={`rounded-xl border p-3 text-left transition ${
-                    value === p.amount ? "border-lime bg-lime/10" : "border-line bg-white/[0.03] hover:border-lime/40"
+                    value === p.amount ? "border-lime bg-lime/10" : "border-line bg-surface-2 hover:border-lime/40"
                   }`}
                 >
-                  <div className="text-lg font-black tabular-nums text-lime">{gbp(p.amount)}</div>
+                  <div className="text-lg font-black tabular-nums text-money">{usd(p.amount)}</div>
                   <div className="text-xs font-semibold">{p.label}</div>
                   {p.hint ? <div className="text-[11px] text-muted">{p.hint}</div> : null}
                 </button>
@@ -133,7 +133,7 @@ export function CheckoutForm({
       ) : null}
 
       <button onClick={pay} disabled={busy} className="btn btn-primary w-full text-base disabled:opacity-60">
-        {busy ? "Taking you to payment…" : `Pay ${gbp(value)}`}
+        {busy ? "Taking you to payment…" : `Pay ${usd(value)}`}
       </button>
 
       <p className="text-center text-xs text-muted">

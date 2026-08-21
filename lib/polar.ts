@@ -27,9 +27,9 @@ export function polar(): Polar {
  * app, and — unlike pay-what-you-want — the buyer cannot edit the amount on
  * Polar's page, so the figure the server computed is the figure that gets paid.
  */
-export function adHocPrice(amountInPence: number) {
+export function adHocPrice(amountInCents: number) {
   return {
-    [PRODUCT_ID]: [{ amountType: "fixed" as const, priceCurrency: "gbp" as const, priceAmount: amountInPence }],
+    [PRODUCT_ID]: [{ amountType: "fixed" as const, priceCurrency: "usd" as const, priceAmount: amountInCents }],
   };
 }
 

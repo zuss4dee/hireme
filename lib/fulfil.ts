@@ -6,7 +6,7 @@ export type FulfilInput = {
   intent: PaymentType;
   candidateId: string;
   userId: string | null;
-  amount: number; // pence
+  amount: number; // cents
   company?: string | null;
   message?: string | null;
   paymentRef?: string | null;

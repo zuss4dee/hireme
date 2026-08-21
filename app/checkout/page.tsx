@@ -4,7 +4,7 @@ import { notFound, redirect } from "next/navigation";
 import { Avatar } from "@/components/avatar";
 import { CheckoutForm } from "@/components/checkout-form";
 import { getCandidateByUserId, getCandidateByUsername, getRival, listCandidates } from "@/lib/db";
-import { gbp, priceToBeat, UNLOCK_PRICE } from "@/lib/money";
+import { usd, priceToBeat, UNLOCK_PRICE } from "@/lib/money";
 import { getSessionUser } from "@/lib/session";
 import { polarConfigured } from "@/lib/polar";
 import type { PaymentType } from "@/lib/types";
@@ -43,7 +43,7 @@ export default async function CheckoutPage({
 
     const presets = [
       { label: rival && rival.id !== mine.id ? `Beat ${rival.name.split(" ")[0]}` : "Nudge it up", amount: target, hint: rival && rival.id !== mine.id ? `takes #${rival.rank}` : "stay hungry" },
-      { label: "Comfortable lead", amount: target + 1000, hint: "+£10 buffer" },
+      { label: "Comfortable lead", amount: target + 1000, hint: "+$10 buffer" },
       { label: "Take #1", amount: top && top.id !== mine.id ? Math.max(priceToBeat(top.current_bid), minimum) : minimum + 1000, hint: "top of the board" },
     ].filter((p, i, arr) => arr.findIndex((x) => x.amount === p.amount) === i);
 
@@ -53,8 +53,8 @@ export default async function CheckoutPage({
           <div className="card border-lime/40 bg-lime/[0.06] p-5 text-center">
             <p className="text-lg font-black tracking-tight">You&apos;re on the board 🎉</p>
             <p className="mt-1 text-sm text-muted">
-              You&apos;re at £0 right now, which means you&apos;re at the bottom. Pick a bid and start climbing —
-              or <Link href="/dashboard" className="font-semibold text-lime underline">skip for now</Link>.
+              You&apos;re at $0 right now, which means you&apos;re at the bottom. Pick a bid and start climbing —
+              or <Link href="/dashboard" className="font-semibold text-money underline">skip for now</Link>.
             </p>
           </div>
         ) : null}
@@ -62,10 +62,10 @@ export default async function CheckoutPage({
         <header>
           <h1 className="text-3xl font-black tracking-tighter sm:text-4xl">Climb the board</h1>
           <p className="mt-2 text-muted">
-            You&apos;re <span className="font-bold text-white">#{mine.rank ?? "—"}</span> at{" "}
-            <span className="font-bold text-lime">{gbp(mine.current_bid)}</span>.
+            You&apos;re <span className="font-bold text-fg">#{mine.rank ?? "—"}</span> at{" "}
+            <span className="font-bold text-money">{usd(mine.current_bid)}</span>.
             {rival && rival.id !== mine.id ? (
-              <> Pay <span className="font-bold text-lime">{gbp(target)}</span> to take #{rival.rank} from {rival.name}.</>
+              <> Pay <span className="font-bold text-money">{usd(target)}</span> to take #{rival.rank} from {rival.name}.</>
             ) : (
               <> Nobody above you. Raise your bid to make the top spot expensive.</>
             )}
@@ -80,7 +80,7 @@ export default async function CheckoutPage({
               <div className="truncate text-sm text-muted">#{rival.rank} · {rival.title}</div>
             </div>
             <div className="ml-auto text-right">
-              <div className="text-xl font-black tabular-nums text-lime">{gbp(rival.current_bid)}</div>
+              <div className="text-xl font-black tabular-nums text-money">{usd(rival.current_bid)}</div>
               <div className="text-[10px] font-bold uppercase tracking-wider text-muted">to beat</div>
             </div>
           </div>
@@ -97,8 +97,8 @@ export default async function CheckoutPage({
           demoMode={demoMode}
           minimumHint={
             rival && rival.id !== mine.id
-              ? `${gbp(target)} takes #${rival.rank}. Minimum ${gbp(minimum)} — anything lower leaves you where you are.`
-              : `Minimum ${gbp(minimum)} — anything lower leaves you where you are.`
+              ? `${usd(target)} takes #${rival.rank}. Minimum ${usd(minimum)} — anything lower leaves you where you are.`
+              : `Minimum ${usd(minimum)} — anything lower leaves you where you are.`
           }
         />
       </div>
@@ -112,7 +112,7 @@ export default async function CheckoutPage({
 
   return (
     <div className="mx-auto flex max-w-2xl flex-col gap-6 pt-6">
-      <Link href={`/profile/${candidate.username}`} className="text-sm font-semibold text-muted transition hover:text-lime">
+      <Link href={`/profile/${candidate.username}`} className="text-sm font-semibold text-muted transition hover:text-money">
         ← back to {candidate.name.split(" ")[0]}&apos;s profile
       </Link>
 
@@ -128,7 +128,7 @@ export default async function CheckoutPage({
           <div className="truncate text-sm text-muted">#{candidate.rank ?? "—"} · {candidate.title}</div>
         </div>
         <div className="ml-auto text-right">
-          <div className="text-2xl font-black tabular-nums text-lime">{gbp(UNLOCK_PRICE)}</div>
+          <div className="text-2xl font-black tabular-nums text-money">{usd(UNLOCK_PRICE)}</div>
           <div className="text-[10px] font-bold uppercase tracking-wider text-muted">one-off</div>
         </div>
       </div>

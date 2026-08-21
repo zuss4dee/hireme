@@ -10,11 +10,11 @@ export function Stat({
   accent?: "lime" | "pink" | "violet" | "gold" | "white";
 }) {
   const color = {
-    lime: "text-lime",
+    lime: "text-money",
     pink: "text-pink",
     violet: "text-violet",
     gold: "text-gold",
-    white: "text-white",
+    white: "text-fg",
   }[accent];
 
   return (

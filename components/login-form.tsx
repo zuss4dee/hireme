@@ -33,7 +33,7 @@ export function LoginForm({ next = "/join" }: { next?: string }) {
       <div className="card p-8 text-center">
         <p className="text-2xl font-black tracking-tight">Check your email 📬</p>
         <p className="mt-2 text-muted">
-          We sent a magic link to <span className="font-semibold text-white">{email}</span>. No password, ever.
+          We sent a magic link to <span className="font-semibold text-fg">{email}</span>. No password, ever.
         </p>
       </div>
     );
@@ -60,7 +60,7 @@ export function LoginForm({ next = "/join" }: { next?: string }) {
             type="button"
             onClick={() => setRole(r)}
             className={`rounded-xl border p-3 text-sm font-bold transition ${
-              role === r ? "border-lime bg-lime/10 text-lime" : "border-line bg-white/[0.03] text-muted hover:text-white"
+              role === r ? "border-lime bg-lime/10 text-money" : "border-line bg-surface-2 text-muted hover:text-fg"
             }`}
           >
             {r === "candidate" ? "I want to be hired" : "I'm hiring"}

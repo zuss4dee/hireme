@@ -39,7 +39,7 @@ export function Search({ action = "/", placeholder = "Search by name, role, skil
       </form>
       <div className="flex flex-wrap gap-2">
         {QUICK.map((t) => (
-          <button key={t} onClick={() => go(t)} className="chip transition hover:border-lime/50 hover:text-lime">
+          <button key={t} onClick={() => go(t)} className="chip transition hover:border-lime/50 hover:text-money">
             {t}
           </button>
         ))}

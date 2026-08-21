@@ -4,7 +4,7 @@ import { Avatar } from "@/components/avatar";
 import { ShareButton } from "@/components/share-button";
 import { Stat } from "@/components/stat";
 import { getCandidateByUserId, getCandidateByUsername, getRival, getStats, listInterest } from "@/lib/db";
-import { compactNumber, gbp, priceToBeat } from "@/lib/money";
+import { compactNumber, usd, priceToBeat } from "@/lib/money";
 import { getSessionUser } from "@/lib/session";
 import { supabaseConfigured } from "@/lib/supabase";
 import { AVAILABILITY_LABEL } from "@/lib/types";
@@ -61,7 +61,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
           <div className="min-w-0">
             <p className="text-sm text-muted">Welcome back,</p>
             <h1 className="text-2xl font-black tracking-tighter sm:text-3xl">{me.name.split(" ")[0]}</h1>
-            <Link href={`/profile/${me.username}`} className="text-sm text-muted hover:text-lime">hireme.lol/{me.username} ↗</Link>
+            <Link href={`/profile/${me.username}`} className="text-sm text-muted hover:text-money">hireme.lol/{me.username} ↗</Link>
           </div>
           <div className="ml-auto flex gap-6 sm:gap-10">
             <div>
@@ -70,7 +70,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
             </div>
             <div>
               <div className="text-[11px] font-bold uppercase tracking-wider text-muted">current bid</div>
-              <div className="text-4xl font-black tabular-nums text-lime sm:text-5xl">{gbp(me.current_bid)}</div>
+              <div className="text-4xl font-black tabular-nums text-money sm:text-5xl">{usd(me.current_bid)}</div>
             </div>
           </div>
         </div>
@@ -79,12 +79,12 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
       <section className="card flex flex-col gap-5 border-lime/30 p-6 sm:flex-row sm:items-center">
         <div className="flex-1">
           <h2 className="text-lg font-black tracking-tight">
-            {rival ? <>Next above you: {rival.name} at {gbp(rival.current_bid)}</> : <>You own the top spot 👑</>}
+            {rival ? <>Next above you: {rival.name} at {usd(rival.current_bid)}</> : <>You own the top spot 👑</>}
           </h2>
           <p className="mt-1 text-sm text-muted">
             {rival ? (
               <>
-                Pay <span className="font-black text-lime">{gbp(target)}</span> and you take #{rival.rank}. The board updates instantly.
+                Pay <span className="font-black text-money">{usd(target)}</span> and you take #{rival.rank}. The board updates instantly.
               </>
             ) : (
               <>Someone will come for it. Raise your bid to make it expensive for them.</>
@@ -93,7 +93,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
         </div>
         <div className="flex gap-3">
           <Link href={`/checkout?intent=bid${rival ? `&beat=${rival.username}` : ""}`} className="btn btn-primary">
-            {rival ? `Outbid them · ${gbp(target)}` : `Raise my bid · ${gbp(target)}`}
+            {rival ? `Outbid them · ${usd(target)}` : `Raise my bid · ${usd(target)}`}
           </Link>
           <ShareButton
             url={`/profile/${me.username}`}
@@ -128,12 +128,12 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
               return (
                 <li key={i.id} className="flex flex-wrap items-center gap-x-2 gap-y-1 py-3 text-sm">
                   <span aria-hidden>{copy.icon}</span>
-                  <span className="font-bold text-white">{i.company ?? "A company"}</span>
+                  <span className="font-bold text-fg">{i.company ?? "A company"}</span>
                   <span className="text-muted">{copy.text}</span>
                   <span className="ml-auto text-xs text-muted">
                     {new Date(i.created_at).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}
                   </span>
-                  {i.message ? <p className="w-full text-white/70">“{i.message}”</p> : null}
+                  {i.message ? <p className="w-full text-fg/70">“{i.message}”</p> : null}
                 </li>
               );
             })}

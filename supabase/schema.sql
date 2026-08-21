@@ -26,7 +26,7 @@ create table if not exists public.candidate_profiles (
   github_url    text,
   twitter_url   text,
   skills        text[] not null default '{}',
-  current_bid   integer not null default 0,   -- pence
+  current_bid   integer not null default 0,   -- cents
   rank          integer,
   availability  text not null default 'open'
                 check (availability in ('open','not_looking','passive','hired')),
@@ -41,7 +41,7 @@ create table if not exists public.bids (
   id           uuid primary key default gen_random_uuid(),
   candidate_id uuid not null references public.candidate_profiles(id) on delete cascade,
   user_id      uuid references public.users(id) on delete set null,
-  amount       integer not null check (amount > 0),   -- pence
+  amount       integer not null check (amount > 0),   -- cents
   created_at   timestamptz not null default now()
 );
 create index if not exists bids_candidate_idx on public.bids (candidate_id, created_at desc);
@@ -74,7 +74,7 @@ create table if not exists public.payments (
   id           uuid primary key default gen_random_uuid(),
   user_id      uuid references public.users(id) on delete set null,
   candidate_id uuid references public.candidate_profiles(id) on delete set null,
-  amount       integer not null,                    -- pence
+  amount       integer not null,                    -- cents
   payment_type text not null check (payment_type in ('bid','unlock','interview','hire')),
   provider_payment_id text unique,   -- Polar checkout id
   status       text not null default 'paid',

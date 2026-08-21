@@ -38,12 +38,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <footer className="border-t border-line/60 py-10 text-sm text-muted">
           <div className="mx-auto flex w-full max-w-5xl flex-col gap-3 px-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
             <p>
-              <span className="font-black text-white">HireMe.lol</span> — the leaderboard is the product.
+              <span className="font-black text-fg">HireMe.lol</span> — the leaderboard is the product.
             </p>
             <div className="flex gap-5">
-              <Link href="/" className="hover:text-white">Leaderboard</Link>
-              <Link href="/join" className="hover:text-white">Join</Link>
-              <Link href="/recruiter" className="hover:text-white">For recruiters</Link>
+              <Link href="/" className="hover:text-fg">Leaderboard</Link>
+              <Link href="/join" className="hover:text-fg">Join</Link>
+              <Link href="/recruiter" className="hover:text-fg">For recruiters</Link>
             </div>
           </div>
         </footer>

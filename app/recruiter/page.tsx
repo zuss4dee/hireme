@@ -5,7 +5,7 @@ import { CandidateCard } from "@/components/candidate-card";
 import { RecruiterMode } from "@/components/recruiter-mode";
 import { Search } from "@/components/search";
 import { listCandidates } from "@/lib/db";
-import { gbp, UNLOCK_PRICE } from "@/lib/money";
+import { usd, UNLOCK_PRICE } from "@/lib/money";
 import { getSessionUser } from "@/lib/session";
 import { supabaseConfigured } from "@/lib/supabase";
 
@@ -38,7 +38,7 @@ export default async function RecruiterPage({ searchParams }: { searchParams: Pr
             </h1>
             <p className="mt-3 max-w-xl text-muted">
               No job posts. No applications. No inbox full of maybes. Browse everyone for free — pay{" "}
-              <span className="font-black text-white">{gbp(UNLOCK_PRICE)}</span> only when you want to actually talk to someone.
+              <span className="font-black text-fg">{usd(UNLOCK_PRICE)}</span> only when you want to actually talk to someone.
             </p>
           </div>
           {!supabaseConfigured ? <RecruiterMode active={user?.role === "recruiter"} /> : null}
@@ -47,10 +47,10 @@ export default async function RecruiterPage({ searchParams }: { searchParams: Pr
         <div className="relative mt-6 grid gap-3 sm:grid-cols-3">
           {[
             { n: "1", t: "Browse", d: "Ranked by how badly they want it." },
-            { n: "2", t: `Unlock · ${gbp(UNLOCK_PRICE)}`, d: "Contact details revealed instantly." },
+            { n: "2", t: `Unlock · ${usd(UNLOCK_PRICE)}`, d: "Contact details revealed instantly." },
             { n: "3", t: "Talk", d: "They get notified that you're interested." },
           ].map((s) => (
-            <div key={s.n} className="rounded-xl border border-line bg-white/[0.03] p-4">
+            <div key={s.n} className="rounded-xl border border-line bg-surface-2 p-4">
               <div className="text-xs font-black text-pink">STEP {s.n}</div>
               <div className="mt-1 font-bold">{s.t}</div>
               <div className="text-sm text-muted">{s.d}</div>
@@ -59,7 +59,7 @@ export default async function RecruiterPage({ searchParams }: { searchParams: Pr
         </div>
       </header>
 
-      <Suspense fallback={<div className="h-12 rounded-full border border-line bg-white/[0.03]" />}>
+      <Suspense fallback={<div className="h-12 rounded-full border border-line bg-surface-2" />}>
         <Search action="/recruiter" placeholder="Search by role, skill, city…" />
       </Suspense>
 
@@ -74,7 +74,7 @@ export default async function RecruiterPage({ searchParams }: { searchParams: Pr
             <Link
               key={f.label}
               href={href}
-              className={`chip transition ${active ? "border-lime/60 bg-lime/10 font-bold text-lime" : "hover:text-white"}`}
+              className={`chip transition ${active ? "border-lime/60 bg-lime/10 font-bold text-money" : "hover:text-fg"}`}
             >
               {f.label}
             </Link>

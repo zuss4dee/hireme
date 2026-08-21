@@ -22,7 +22,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
         <LoginForm next={next ?? "/join"} />
       </Suspense>
       <p className="text-center text-sm text-muted">
-        Just browsing? <Link href="/" className="font-semibold text-lime hover:underline">See the board</Link>
+        Just browsing? <Link href="/" className="font-semibold text-money hover:underline">See the board</Link>
       </p>
     </div>
   );

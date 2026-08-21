@@ -55,7 +55,7 @@ export const SEEDS: Seed[] = [
   },
   {
     name: "Tobi Adeyemi", username: "tobi", title: "Growth Marketer",
-    bio: "I turn £1 into £6. Repeatedly. Ask me about the TikTok thing.",
+    bio: "I turn $1 into $6. Repeatedly. Ask me about the TikTok thing.",
     location: "Lagos, NG", skills: ["Paid social", "SEO", "Lifecycle", "Analytics"],
     bid: 7200, availability: "open", portfolio: "https://tobigrowth.co",
     links: { twitter: "https://x.com/tobigrows" },

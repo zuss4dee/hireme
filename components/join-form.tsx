@@ -122,9 +122,9 @@ export function JoinForm() {
               <div className="mt-1 text-xs text-muted">hireme.lol/{username}</div>
             </div>
           </div>
-          <p className="mt-4 text-sm text-white/80">{bio || "Your one-line pitch shows up right here. Make it embarrassing to ignore."}</p>
+          <p className="mt-4 text-sm text-fg/80">{bio || "Your one-line pitch shows up right here. Make it embarrassing to ignore."}</p>
           <div className="mt-4 flex flex-wrap gap-2">
-            <span className="chip border-lime/30 text-lime">{AVAILABILITY_LABEL[availability]}</span>
+            <span className="chip border-lime/30 text-money">{AVAILABILITY_LABEL[availability]}</span>
             {location ? <span className="chip">📍 {location}</span> : null}
             {skills
               .split(",")
@@ -138,7 +138,7 @@ export function JoinForm() {
           <div className="mt-5 flex items-center justify-between border-t border-line pt-4">
             <div>
               <div className="text-[11px] font-bold uppercase tracking-wider text-muted">starting bid</div>
-              <div className="text-2xl font-black text-lime">£0</div>
+              <div className="text-2xl font-black text-money">$0</div>
             </div>
             <div className="text-right text-xs text-muted">
               You&apos;ll pick a bid

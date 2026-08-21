@@ -5,7 +5,7 @@ import { Confetti } from "@/components/confetti";
 import { ShareButton } from "@/components/share-button";
 import { getCandidateById, getCandidateByUsername } from "@/lib/db";
 import { fulfil } from "@/lib/fulfil";
-import { gbp } from "@/lib/money";
+import { usd } from "@/lib/money";
 import { getSessionUser } from "@/lib/session";
 import { polar, polarConfigured } from "@/lib/polar";
 import type { Candidate, PaymentType } from "@/lib/types";
@@ -86,13 +86,13 @@ export default async function SuccessPage({ searchParams }: { searchParams: Prom
 
         {isBid ? (
           <div className="relative">
-            <p className="text-sm font-black uppercase tracking-widest text-lime">Bid placed</p>
+            <p className="text-sm font-black uppercase tracking-widest text-money">Bid placed</p>
             <h1 className="mt-3 text-5xl font-black tracking-tighter sm:text-7xl">#{candidate.rank ?? "—"}</h1>
             <p className="mt-2 text-lg font-semibold">
-              {candidate.rank === 1 ? "You own the top of the board 👑" : `You're now #${candidate.rank} at ${gbp(candidate.current_bid)}`}
+              {candidate.rank === 1 ? "You own the top of the board 👑" : `You're now #${candidate.rank} at ${usd(candidate.current_bid)}`}
             </p>
             <p className="mt-3 text-sm text-muted">
-              Paid {gbp(amount)}. The board already updated — everyone can see it.
+              Paid {usd(amount)}. The board already updated — everyone can see it.
             </p>
             <div className="mt-7 flex flex-col justify-center gap-3 sm:flex-row">
               <ShareButton
@@ -114,13 +114,13 @@ export default async function SuccessPage({ searchParams }: { searchParams: Prom
             </div>
             <div className="mx-auto mt-6 max-w-sm rounded-xl border border-lime/40 bg-lime/[0.08] p-4">
               <p className="text-[11px] font-bold uppercase tracking-wider text-muted">Contact</p>
-              <a href={`mailto:${candidate.contact_email}`} className="font-mono text-lg font-bold text-lime underline">
+              <a href={`mailto:${candidate.contact_email}`} className="font-mono text-lg font-bold text-money underline">
                 {candidate.contact_email}
               </a>
             </div>
             <p className="mt-4 text-sm text-muted">
               {candidate.name.split(" ")[0]} has been notified that{" "}
-              <span className="font-semibold text-white">{company ?? user?.email ?? "a company"}</span> is interested
+              <span className="font-semibold text-fg">{company ?? user?.email ?? "a company"}</span> is interested
               {intent === "interview" ? " and wants to interview them." : intent === "hire" ? " and wants to hire them." : "."}
             </p>
             <div className="mt-7 flex flex-col justify-center gap-3 sm:flex-row">

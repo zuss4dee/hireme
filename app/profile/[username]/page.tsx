@@ -8,7 +8,7 @@ import { ShareButton } from "@/components/share-button";
 import { Stat } from "@/components/stat";
 import { ViewTracker } from "@/components/view-tracker";
 import { getCandidateByUsername, getRival, getStats, hasUnlocked, listBids } from "@/lib/db";
-import { compactNumber, gbp, priceToBeat } from "@/lib/money";
+import { compactNumber, usd, priceToBeat } from "@/lib/money";
 import { getSessionUser } from "@/lib/session";
 import { AVAILABILITY_LABEL } from "@/lib/types";
 
@@ -22,7 +22,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (!c) return { title: "Not on the board" };
   return {
     title: `${c.name} — ${c.title} · #${c.rank ?? "?"}`,
-    description: `${c.name} is #${c.rank ?? "?"} on HireMe.lol at ${gbp(c.current_bid)}. ${c.bio ?? ""}`.trim(),
+    description: `${c.name} is #${c.rank ?? "?"} on HireMe.lol at ${usd(c.current_bid)}. ${c.bio ?? ""}`.trim(),
     openGraph: { title: `${c.name} is #${c.rank ?? "?"} on HireMe.lol`, description: c.bio ?? c.title },
   };
 }
@@ -54,7 +54,7 @@ export default async function ProfilePage({ params }: Props) {
         <ViewTracker candidateId={c.id} ownerId={c.user_id} />
       </Suspense>
 
-      <Link href="/" className="text-sm font-semibold text-muted transition hover:text-lime">← back to the board</Link>
+      <Link href="/" className="text-sm font-semibold text-muted transition hover:text-money">← back to the board</Link>
 
       <section className="card relative overflow-hidden p-6 sm:p-8">
         <div className="pointer-events-none absolute -right-24 -top-24 h-64 w-64 rounded-full bg-lime/10 blur-3xl" />
@@ -64,12 +64,12 @@ export default async function ProfilePage({ params }: Props) {
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-2">
               <span className="chip border-gold/40 bg-gold/10 font-black text-gold">#{c.rank ?? "—"} on the board</span>
-              <span className="chip border-lime/30 text-lime">{AVAILABILITY_LABEL[c.availability]}</span>
+              <span className="chip border-lime/30 text-money">{AVAILABILITY_LABEL[c.availability]}</span>
               {c.location ? <span className="chip">📍 {c.location}</span> : null}
             </div>
             <h1 className="mt-3 text-3xl font-black tracking-tighter sm:text-5xl">{c.name}</h1>
             <p className="mt-1 text-lg font-semibold text-muted">{c.title}</p>
-            {c.bio ? <p className="mt-4 max-w-2xl text-white/85">{c.bio}</p> : null}
+            {c.bio ? <p className="mt-4 max-w-2xl text-fg/80">{c.bio}</p> : null}
 
             <div className="mt-5 flex flex-wrap gap-2">
               {c.skills.map((s) => (
@@ -82,7 +82,7 @@ export default async function ProfilePage({ params }: Props) {
                 const href = c[key];
                 if (!href) return null;
                 return (
-                  <PortfolioLink key={key} candidateId={c.id} href={href} className="chip transition hover:border-lime/50 hover:text-lime">
+                  <PortfolioLink key={key} candidateId={c.id} href={href} className="chip transition hover:border-lime/50 hover:text-money">
                     <span aria-hidden>{icon}</span> {label}
                   </PortfolioLink>
                 );
@@ -92,10 +92,10 @@ export default async function ProfilePage({ params }: Props) {
 
           <div className="shrink-0 sm:text-right">
             <div className="text-[11px] font-bold uppercase tracking-wider text-muted">current bid</div>
-            <div className="text-4xl font-black tabular-nums text-lime sm:text-5xl">{gbp(c.current_bid)}</div>
+            <div className="text-4xl font-black tabular-nums text-money sm:text-5xl">{usd(c.current_bid)}</div>
             {rival ? (
               <p className="mt-1 text-xs text-muted">
-                {gbp(priceToBeat(rival.current_bid))} beats {rival.name.split(" ")[0]} for #{rival.rank}
+                {usd(priceToBeat(rival.current_bid))} beats {rival.name.split(" ")[0]} for #{rival.rank}
               </p>
             ) : (
               <p className="mt-1 text-xs font-semibold text-gold">Top of the board 👑</p>
@@ -128,11 +128,11 @@ export default async function ProfilePage({ params }: Props) {
           )}
         </div>
 
-        <div className="relative mt-4 rounded-xl border border-line bg-white/[0.03] p-4">
+        <div className="relative mt-4 rounded-xl border border-line bg-surface-2 p-4">
           {unlocked ? (
             <p className="text-sm">
-              <span className="font-bold text-lime">Contact unlocked:</span>{" "}
-              <a href={`mailto:${c.contact_email}`} className="font-mono text-white underline decoration-lime">{c.contact_email}</a>
+              <span className="font-bold text-money">Contact unlocked:</span>{" "}
+              <a href={`mailto:${c.contact_email}`} className="font-mono text-fg underline decoration-lime">{c.contact_email}</a>
             </p>
           ) : (
             <p className="text-sm text-muted">
@@ -156,7 +156,7 @@ export default async function ProfilePage({ params }: Props) {
             {bids.map((b) => (
               <li key={b.id} className="flex items-center justify-between py-2 text-sm">
                 <span className="text-muted">{new Date(b.created_at).toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" })}</span>
-                <span className="font-black tabular-nums text-lime">{gbp(b.amount)}</span>
+                <span className="font-black tabular-nums text-money">{usd(b.amount)}</span>
               </li>
             ))}
           </ul>

@@ -28,7 +28,7 @@ export async function POST(req: Request) {
   // an amount from the client, and it still has to clear the current bid below.
   const amount = intent === "bid" ? Math.round(Number(body.amount ?? 0)) : UNLOCK_PRICE;
   if (!Number.isFinite(amount) || amount < 100 || amount > 5_000_000) {
-    return NextResponse.json({ error: "Bids must be between £1 and £50,000." }, { status: 400 });
+    return NextResponse.json({ error: "Bids must be between $1 and $50,000." }, { status: 400 });
   }
 
   const candidate = body.candidateId ? await getCandidateById(body.candidateId) : null;
