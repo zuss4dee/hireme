@@ -1,0 +1,182 @@
+@import "tailwindcss";
+
+@theme {
+  --color-ink: #08080d;
+  --color-ink-2: #0f0f18;
+  --color-surface: #14141f;
+  --color-surface-2: #1c1c2a;
+  --color-line: #262636;
+  --color-muted: #8b8ba7;
+  --color-lime: #d4ff3f;
+  --color-lime-dark: #a8cc1f;
+  --color-pink: #ff4d9d;
+  --color-violet: #9b6bff;
+  --color-gold: #ffc83d;
+
+  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, monospace;
+
+  --radius-xl2: 1.25rem;
+}
+
+@layer base {
+  * {
+    border-color: var(--color-line);
+  }
+  html {
+    background: var(--color-ink);
+    color-scheme: dark;
+  }
+  body {
+    background:
+      radial-gradient(900px 500px at 15% -10%, rgba(155, 107, 255, 0.18), transparent 60%),
+      radial-gradient(800px 500px at 90% 0%, rgba(212, 255, 63, 0.1), transparent 55%),
+      var(--color-ink);
+    color: #f4f4fb;
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    min-height: 100dvh;
+  }
+  ::selection {
+    background: var(--color-lime);
+    color: #0a0a0f;
+  }
+  input,
+  textarea,
+  select {
+    font-family: inherit;
+  }
+}
+
+@layer components {
+  .card {
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.015));
+    border: 1px solid var(--color-line);
+    border-radius: var(--radius-xl2);
+  }
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    border-radius: 999px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    padding: 0.75rem 1.25rem;
+    transition: transform 0.12s ease, filter 0.12s ease, background 0.12s ease;
+    white-space: nowrap;
+  }
+  .btn:active {
+    transform: translateY(1px) scale(0.99);
+  }
+  .btn-primary {
+    background: var(--color-lime);
+    color: #0a0a0f;
+    box-shadow: 0 0 0 1px rgba(212, 255, 63, 0.35), 0 12px 30px -12px rgba(212, 255, 63, 0.6);
+  }
+  .btn-primary:hover {
+    filter: brightness(1.08);
+  }
+  .btn-pink {
+    background: var(--color-pink);
+    color: #10000a;
+    box-shadow: 0 12px 30px -12px rgba(255, 77, 157, 0.7);
+  }
+  .btn-pink:hover {
+    filter: brightness(1.08);
+  }
+  .btn-ghost {
+    background: rgba(255, 255, 255, 0.05);
+    color: #f4f4fb;
+    border: 1px solid var(--color-line);
+  }
+  .btn-ghost:hover {
+    background: rgba(255, 255, 255, 0.1);
+  }
+  .field {
+    width: 100%;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid var(--color-line);
+    border-radius: 0.85rem;
+    padding: 0.75rem 0.95rem;
+    font-size: 0.95rem;
+    outline: none;
+    transition: border-color 0.12s ease, box-shadow 0.12s ease;
+  }
+  .field::placeholder {
+    color: #6a6a85;
+  }
+  .field:focus {
+    border-color: var(--color-lime);
+    box-shadow: 0 0 0 3px rgba(212, 255, 63, 0.15);
+  }
+  .label {
+    display: block;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--color-muted);
+    margin-bottom: 0.4rem;
+  }
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    border-radius: 999px;
+    border: 1px solid var(--color-line);
+    background: rgba(255, 255, 255, 0.04);
+    padding: 0.2rem 0.6rem;
+    font-size: 0.75rem;
+    color: #d5d5e6;
+  }
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.rise {
+  animation: rise 0.4s ease both;
+}
+
+@keyframes pulse-ring {
+  0% {
+    box-shadow: 0 0 0 0 rgba(212, 255, 63, 0.45);
+  }
+  70% {
+    box-shadow: 0 0 0 12px rgba(212, 255, 63, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(212, 255, 63, 0);
+  }
+}
+.pulse-ring {
+  animation: pulse-ring 2s infinite;
+}
+
+.marquee {
+  animation: marquee 32s linear infinite;
+}
+@keyframes marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rise,
+  .pulse-ring,
+  .marquee {
+    animation: none;
+  }
+}

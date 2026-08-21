@@ -1,0 +1,53 @@
+import type { Metadata, Viewport } from "next";
+import Link from "next/link";
+import "./globals.css";
+import { Nav } from "@/components/nav";
+
+export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "https://hireme.lol"),
+  title: {
+    default: "HireMe.lol — who deserves to be hired?",
+    template: "%s · HireMe.lol",
+  },
+  description:
+    "A public leaderboard of people who want to be hired. Outbid your way to the top. Recruiters browse for free and hire directly.",
+  openGraph: {
+    title: "HireMe.lol — who deserves to be hired?",
+    description: "Pay to climb. Get discovered. The leaderboard is the product.",
+    type: "website",
+  },
+  twitter: { card: "summary_large_image" },
+};
+
+export const viewport: Viewport = { themeColor: "#08080d" };
+
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <html lang="en">
+      <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
+          rel="stylesheet"
+        />
+      </head>
+      <body>
+        <Nav />
+        <main className="mx-auto w-full max-w-5xl px-4 pb-24 pt-6 sm:px-6">{children}</main>
+        <footer className="border-t border-line/60 py-10 text-sm text-muted">
+          <div className="mx-auto flex w-full max-w-5xl flex-col gap-3 px-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+            <p>
+              <span className="font-black text-white">HireMe.lol</span> — the leaderboard is the product.
+            </p>
+            <div className="flex gap-5">
+              <Link href="/" className="hover:text-white">Leaderboard</Link>
+              <Link href="/join" className="hover:text-white">Join</Link>
+              <Link href="/recruiter" className="hover:text-white">For recruiters</Link>
+            </div>
+          </div>
+        </footer>
+      </body>
+    </html>
+  );
+}
