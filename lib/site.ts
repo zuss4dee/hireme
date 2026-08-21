@@ -3,15 +3,29 @@
  * app follows whatever domain you deploy it on. Safe to import from client
  * components — NEXT_PUBLIC_* is inlined at build time.
  */
-export const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://hireme.fit";
+const FALLBACK = "https://hireme.fit";
 
-export const SITE_HOST = (() => {
+/**
+ * Env vars arrive as strings, and an unset one in a dashboard is "" rather than
+ * undefined — which `??` does not catch. Anything unusable (blank, missing
+ * protocol, malformed) falls back rather than throwing, because this feeds
+ * `metadataBase` and a throw here fails the whole build.
+ */
+function normaliseSiteUrl(value: string | undefined): string {
+  const raw = (value ?? "").trim();
+  if (!raw) return FALLBACK;
+  const withProtocol = /^https?:\/\//i.test(raw) ? raw : `https://${raw}`;
   try {
-    return new URL(SITE_URL).host.replace(/^www\./, "");
+    return new URL(withProtocol).origin;
   } catch {
-    return "hireme.fit";
+    return FALLBACK;
   }
-})();
+}
+
+export const SITE_URL = normaliseSiteUrl(process.env.NEXT_PUBLIC_SITE_URL);
+
+/** Always parseable: SITE_URL is validated above. */
+export const SITE_HOST = new URL(SITE_URL).host.replace(/^www\./, "");
 
 /** ".fit" — empty on hosts without a dot, e.g. localhost:3000 */
 const dot = SITE_HOST.indexOf(".");
