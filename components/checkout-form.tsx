@@ -15,6 +15,8 @@ export function CheckoutForm({
   editable,
   demoMode,
   minimumHint,
+  boardBids = [],
+  selfBid,
 }: {
   intent: PaymentType;
   candidateId: string;
@@ -25,6 +27,10 @@ export function CheckoutForm({
   editable: boolean;
   demoMode: boolean;
   minimumHint?: string;
+  /** Every bid on the board, highest first — drives the live rank preview. */
+  boardBids?: number[];
+  /** The bidder's own current bid, excluded so they don't outrank themselves. */
+  selfBid?: number;
 }) {
   const router = useRouter();
   const [value, setValue] = useState(amount);
@@ -34,6 +40,11 @@ export function CheckoutForm({
   const [busy, setBusy] = useState(false);
 
   const tooLow = value < minimum;
+
+  // Where this amount lands right now. Their own existing bid doesn't count as
+  // competition — they're replacing it, not stacking on top of it.
+  const rivals = boardBids.filter((b) => b !== selfBid || selfBid === undefined);
+  const projectedRank = rivals.filter((b) => b >= value).length + 1;
 
   async function pay() {
     setError(null);
@@ -80,6 +91,10 @@ export function CheckoutForm({
               onChange={(e) => setValue(Math.round(Number(e.target.value) * 100))}
               className="field !py-4 !pl-10 !text-3xl !font-black tabular-nums"
             />
+          </div>
+          <div className="mt-3 flex items-center justify-between gap-3 rounded-xl border border-line bg-surface-2 px-4 py-3">
+            <span className="text-sm text-muted">This bid lands you at</span>
+            <span className="text-2xl font-black tabular-nums text-gold">#{projectedRank}</span>
           </div>
           <p className={`mt-2 text-xs ${tooLow ? "text-pink" : "text-muted"}`}>
             {minimumHint ?? `Minimum ${usd(minimum)} — anything lower doesn't move you.`}

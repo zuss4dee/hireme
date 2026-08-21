@@ -5,6 +5,8 @@ import { useFormStatus } from "react-dom";
 import { Avatar } from "./avatar";
 import { createProfileAction, type FormState } from "@/lib/actions";
 import { AVAILABILITY_LABEL, type Availability } from "@/lib/types";
+import { parseSkills } from "@/lib/skills";
+import { MIN_BID, usd } from "@/lib/money";
 import { profilePath } from "@/lib/site";
 
 function slug(s: string) {
@@ -15,12 +17,12 @@ function Submit() {
   const { pending } = useFormStatus();
   return (
     <button type="submit" disabled={pending} className="btn btn-primary w-full text-base disabled:opacity-60">
-      {pending ? "Putting you on the board…" : "Put me on the board →"}
+      {pending ? "Taking you to payment…" : "Continue to payment →"}
     </button>
   );
 }
 
-export function JoinForm() {
+export function JoinForm({ boardBids }: { boardBids: number[] }) {
   const [state, action] = useActionState<FormState, FormData>(createProfileAction, undefined);
   const [name, setName] = useState("");
   const [title, setTitle] = useState("");
@@ -29,7 +31,11 @@ export function JoinForm() {
   const [location, setLocation] = useState("");
   const [skills, setSkills] = useState("");
   const [availability, setAvailability] = useState<Availability>("open");
+  const [bid, setBid] = useState(MIN_BID);
   const username = slug(name) || "you";
+  const parsedSkills = parseSkills(skills);
+  // Same arithmetic the server does: your bid slots you in wherever it lands.
+  const projectedRank = boardBids.filter((b) => b >= bid).length + 1;
 
   return (
     <div className="grid gap-8 lg:grid-cols-[1.1fr_0.9fr]">
@@ -97,8 +103,26 @@ export function JoinForm() {
             </div>
           </div>
           <div>
-            <label className="label" htmlFor="skills">Skills (comma separated)</label>
-            <input id="skills" name="skills" value={skills} onChange={(e) => setSkills(e.target.value)} className="field" placeholder="Next.js, LLM apps, Product" />
+            <label className="label" htmlFor="skills">Skills</label>
+            <textarea
+              id="skills"
+              name="skills"
+              rows={3}
+              value={skills}
+              onChange={(e) => setSkills(e.target.value)}
+              className="field resize-y"
+              placeholder={"Paste them however you like:\nNext.js, LLM apps, Product\n• TypeScript\n• Design systems"}
+            />
+            <p className="mt-1 text-xs text-muted">
+              Commas, new lines or bullets — paste straight from your CV and we&apos;ll sort it out.
+            </p>
+            {parsedSkills.length > 0 ? (
+              <div className="mt-2 flex flex-wrap gap-1.5">
+                {parsedSkills.map((sk) => (
+                  <span key={sk} className="chip border-violet/30 bg-violet/10 text-violet">{sk}</span>
+                ))}
+              </div>
+            ) : null}
           </div>
           <div>
             <label className="label" htmlFor="contact_email">Contact email</label>
@@ -108,8 +132,35 @@ export function JoinForm() {
           <input type="hidden" name="username" value={username} />
         </div>
 
+        <div className="card flex flex-col gap-4 p-5">
+          <div>
+            <h2 className="text-sm font-black uppercase tracking-widest text-muted">Your opening bid</h2>
+            <p className="mt-1 text-sm text-muted">
+              Your bid is your rank. Bid more than someone and you take their spot — {usd(bid)} puts you at{" "}
+              <span className="font-black text-fg">#{projectedRank}</span> right now.
+            </p>
+          </div>
+          <div className="relative">
+            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-2xl font-black text-money">$</span>
+            <input
+              id="bid"
+              name="bid"
+              type="number"
+              required
+              min={MIN_BID / 100}
+              step="1"
+              value={Number.isFinite(bid) ? bid / 100 : ""}
+              onChange={(e) => setBid(Math.round(Number(e.target.value) * 100))}
+              className="field !py-4 !pl-10 !text-3xl !font-black tabular-nums"
+            />
+          </div>
+          <p className={`text-xs ${bid < MIN_BID ? "text-pink" : "text-muted"}`}>
+            Minimum {usd(MIN_BID)}. You pay on the next screen — nothing is public until it clears.
+          </p>
+        </div>
+
         <Submit />
-        <p className="text-center text-xs text-muted">Joining is free. Climbing is not.</p>
+        <p className="text-center text-xs text-muted">No free listings. Your bid is your position.</p>
       </form>
 
       <aside className="lg:sticky lg:top-24 lg:h-fit">
@@ -127,24 +178,18 @@ export function JoinForm() {
           <div className="mt-4 flex flex-wrap gap-2">
             <span className="chip border-lime/30 text-money">{AVAILABILITY_LABEL[availability]}</span>
             {location ? <span className="chip">📍 {location}</span> : null}
-            {skills
-              .split(",")
-              .map((s) => s.trim())
-              .filter(Boolean)
-              .slice(0, 5)
-              .map((s) => (
-                <span key={s} className="chip">{s}</span>
-              ))}
+            {parsedSkills.slice(0, 5).map((s) => (
+              <span key={s} className="chip">{s}</span>
+            ))}
           </div>
           <div className="mt-5 flex items-center justify-between border-t border-line pt-4">
             <div>
-              <div className="text-[11px] font-bold uppercase tracking-wider text-muted">starting bid</div>
-              <div className="text-2xl font-black text-money">$0</div>
+              <div className="text-[11px] font-bold uppercase tracking-wider text-muted">opening bid</div>
+              <div className="text-2xl font-black text-money">{usd(bid)}</div>
             </div>
-            <div className="text-right text-xs text-muted">
-              You&apos;ll pick a bid
-              <br />
-              on the next screen.
+            <div className="text-right">
+              <div className="text-[11px] font-bold uppercase tracking-wider text-muted">lands at</div>
+              <div className="text-2xl font-black text-gold">#{projectedRank}</div>
             </div>
           </div>
         </div>

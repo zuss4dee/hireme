@@ -43,10 +43,10 @@ when its token and product id are present. Either can be enabled independently.
 | Route | What it is |
 | --- | --- |
 | `/` | Leaderboard, search, live bid ticker |
-| `/join` | Create a candidate profile (live preview, no CV) |
+| `/join` | Create a profile and place an opening bid (live preview, no CV) |
 | `/profile/[username]` | Public profile — rank, bid, links, stats, hire buttons |
 | `/dashboard` | Candidate analytics + the "outbid them" loop |
-| `/recruiter` | Free browsing grid with filters |
+| `/recruiter` | Free browsing grid — filter by status, skill, location and bid range |
 | `/checkout` | Bids and recruiter unlocks |
 | `/checkout/success` | Confetti, new rank, share |
 
@@ -77,6 +77,21 @@ vercel
 
 Add the same environment variables in the Vercel project, then point a Polar webhook
 endpoint at `https://your-domain/api/polar/webhook` for `order.paid`.
+
+## Notes
+
+**Skills accept anything.** `lib/skills.ts` splits on commas, newlines, bullets, pipes,
+semicolons and middots, so people can paste straight from a CV. Multi-word skills
+("Design systems") and slashed ones ("CI/CD") survive intact; duplicates are dropped
+case-insensitively.
+
+**Recruiter facets come from the live board**, not a hardcoded taxonomy — the skill and
+location filters list whatever people actually put on their profiles, most common first.
+
+**Don't run `npm run build` while `next dev` is running.** They share `.next` and the
+production build corrupts the dev server's module map (every page 500s with
+`__webpack_modules__[moduleId] is not a function`). Use `npm run build:check`, which builds
+into `.next-build` instead.
 
 ## Structure
 

@@ -61,7 +61,11 @@ export function demoDB(): DemoDB {
 export function demoRecomputeRanks() {
   const db = demoDB();
   db.candidates.sort((a, b) => b.current_bid - a.current_bid || a.created_at.localeCompare(b.created_at));
-  db.candidates.forEach((c, i) => (c.rank = i + 1));
+  // Unpaid profiles (bid 0) are not on the board, so they hold no rank.
+  let rank = 0;
+  db.candidates.forEach((c) => {
+    c.rank = c.current_bid > 0 ? ++rank : null;
+  });
 }
 
 export function demoStats(candidateId: string): CandidateStats {

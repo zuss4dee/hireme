@@ -26,13 +26,20 @@ export async function listCandidates(opts: { q?: string; limit?: number } = {}):
 
   if (!supabaseConfigured) {
     demoRecomputeRanks();
-    let rows = [...demoDB().candidates];
+    // current_bid === 0 means the profile exists but was never paid for.
+    let rows = demoDB().candidates.filter((c) => c.current_bid > 0);
     if (q) rows = rows.filter((c) => matches(c, q));
     return rows.slice(0, limit);
   }
 
   const sb = await serverClient();
-  let query = sb.from("candidate_profiles").select(CANDIDATE_COLS).order("current_bid", { ascending: false }).order("created_at", { ascending: true }).limit(limit);
+  let query = sb
+    .from("candidate_profiles")
+    .select(CANDIDATE_COLS)
+    .gt("current_bid", 0)
+    .order("current_bid", { ascending: false })
+    .order("created_at", { ascending: true })
+    .limit(limit);
   if (q) {
     const term = `%${q}%`;
     query = query.or(`name.ilike.${term},title.ilike.${term},location.ilike.${term},bio.ilike.${term}`);
@@ -149,6 +156,12 @@ export async function listBids(candidateId: string): Promise<Bid[]> {
     .order("created_at", { ascending: false })
     .limit(10);
   return (data ?? []) as Bid[];
+}
+
+/** Every distinct bid on the board, highest first — powers the rank preview. */
+export async function boardBids(): Promise<number[]> {
+  const rows = await listCandidates({ limit: 500 });
+  return rows.map((c) => c.current_bid).sort((a, b) => b - a);
 }
 
 export async function totalPot(): Promise<number> {

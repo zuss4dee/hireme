@@ -46,6 +46,24 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
 
   const [stats, rival, interest] = await Promise.all([getStats(me.id), getRival(me), listInterest(me.id)]);
   const target = rival ? priceToBeat(rival.current_bid) : priceToBeat(me.current_bid);
+  const isLive = me.current_bid > 0;
+
+  // Created but never paid for: nothing to analyse yet, so send them to finish.
+  if (!isLive) {
+    return (
+      <div className="card mt-10 p-10 text-center">
+        <span className="chip mx-auto border-gold/40 bg-gold/10 font-bold text-gold">Not live yet</span>
+        <h1 className="mt-4 text-3xl font-black tracking-tighter">
+          {me.name.split(" ")[0]}, your profile is saved but hidden.
+        </h1>
+        <p className="mx-auto mt-3 max-w-md text-muted">
+          The board isn&apos;t free — your bid is what puts you on it. Place one and you&apos;re public
+          instantly, at whatever rank it earns.
+        </p>
+        <Link href="/checkout?intent=bid" className="btn btn-primary mt-6">Place my bid</Link>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col gap-6 pt-4">

@@ -57,6 +57,13 @@ export default async function ProfilePage({ params }: Props) {
 
       <Link href="/" className="text-sm font-semibold text-muted transition hover:text-money">← back to the board</Link>
 
+      {c.current_bid === 0 ? (
+        <p className="rounded-xl border border-gold/40 bg-gold/10 px-4 py-3 text-sm font-semibold text-gold">
+          This profile isn&apos;t on the board yet — no bid has been placed, so it won&apos;t show up in
+          the leaderboard or in recruiter search.
+        </p>
+      ) : null}
+
       <section className="card relative overflow-hidden p-6 sm:p-8">
         <div className="pointer-events-none absolute -right-24 -top-24 h-64 w-64 rounded-full bg-lime/10 blur-3xl" />
         <div className="relative flex flex-col gap-6 sm:flex-row sm:items-start">

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
 import { CandidateCard } from "@/components/candidate-card";
+import { FilterBar, type FilterGroup } from "@/components/filter-bar";
 import { RecruiterMode } from "@/components/recruiter-mode";
 import { Search } from "@/components/search";
 import { listCandidates } from "@/lib/db";
@@ -12,17 +13,62 @@ import { supabaseConfigured } from "@/lib/supabase";
 export const metadata: Metadata = { title: "Browse candidates" };
 export const dynamic = "force-dynamic";
 
-const FILTERS = [
-  { key: "", label: "Everyone" },
-  { key: "open", label: "Open to work" },
-  { key: "passive", label: "Open to the right thing" },
+const STATUS_OPTIONS = [
+  { value: "", label: "Everyone" },
+  { value: "open", label: "Open to work" },
+  { value: "passive", label: "Open to the right thing" },
 ];
 
-export default async function RecruiterPage({ searchParams }: { searchParams: Promise<{ q?: string; status?: string }> }) {
-  const { q, status } = await searchParams;
+const BUDGET_OPTIONS = [
+  { value: "", label: "Any" },
+  { value: "0-2500", label: "Under $25" },
+  { value: "2500-10000", label: "$25–$100" },
+  { value: "10000-", label: "$100+" },
+];
+
+/** Facets come from whoever is actually on the board, so they're never stale. */
+function facets<T extends string>(values: T[], limit: number) {
+  const counts = new Map<string, number>();
+  values.forEach((v) => counts.set(v, (counts.get(v) ?? 0) + 1));
+  return [...counts.entries()]
+    .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+    .slice(0, limit)
+    // A count of 1 on every chip is just noise — only show it when it means something.
+    .map(([value, count]) => ({ value, label: value, count: count > 1 ? count : undefined }));
+}
+
+export default async function RecruiterPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string; status?: string; skill?: string; location?: string; budget?: string }>;
+}) {
+  const { q, status, skill, location, budget } = await searchParams;
   const user = await getSessionUser();
   const all = await listCandidates({ q });
-  const candidates = status ? all.filter((c) => c.availability === status) : all;
+
+  const [budgetMin, budgetMax] = (budget ?? "").split("-").map((n) => (n === "" ? undefined : Number(n)));
+
+  const candidates = all.filter((c) => {
+    if (status && c.availability !== status) return false;
+    if (skill && !c.skills.some((s) => s.toLowerCase() === skill.toLowerCase())) return false;
+    if (location && c.location !== location) return false;
+    if (budget) {
+      if (budgetMin !== undefined && c.current_bid < budgetMin) return false;
+      if (budgetMax !== undefined && c.current_bid >= budgetMax) return false;
+    }
+    return true;
+  });
+
+  const groups: FilterGroup[] = [
+    { key: "status", label: "Status", options: STATUS_OPTIONS },
+    { key: "skill", label: "Skill", options: [{ value: "", label: "Any" }, ...facets(all.flatMap((c) => c.skills), 10)] },
+    {
+      key: "location",
+      label: "Location",
+      options: [{ value: "", label: "Anywhere" }, ...facets(all.flatMap((c) => (c.location ? [c.location] : [])), 8)],
+    },
+    { key: "budget", label: "Their bid", options: BUDGET_OPTIONS },
+  ];
 
   return (
     <div className="flex flex-col gap-7 pt-6">
@@ -63,24 +109,18 @@ export default async function RecruiterPage({ searchParams }: { searchParams: Pr
         <Search action="/recruiter" placeholder="Search by role, skill, city…" />
       </Suspense>
 
-      <div className="flex flex-wrap items-center gap-2">
-        {FILTERS.map((f) => {
-          const params = new URLSearchParams();
-          if (q) params.set("q", q);
-          if (f.key) params.set("status", f.key);
-          const href = `/recruiter${params.toString() ? `?${params}` : ""}`;
-          const active = (status ?? "") === f.key;
-          return (
-            <Link
-              key={f.label}
-              href={href}
-              className={`chip transition ${active ? "border-lime/60 bg-lime/10 font-bold text-money" : "hover:text-fg"}`}
-            >
-              {f.label}
+      <div className="card flex flex-col gap-3 p-4">
+        <FilterBar groups={groups} active={{ status, skill, location, budget }} basePath="/recruiter" query={q} />
+        <div className="flex items-center justify-between border-t border-line pt-3 text-sm text-muted">
+          <span>
+            <span className="font-bold text-fg">{candidates.length}</span> of {all.length} on the board
+          </span>
+          {status || skill || location || budget ? (
+            <Link href={q ? `/recruiter?q=${encodeURIComponent(q)}` : "/recruiter"} className="font-semibold text-pink hover:underline">
+              Clear filters
             </Link>
-          );
-        })}
-        <span className="ml-auto text-sm text-muted">{candidates.length} people</span>
+          ) : null}
+        </div>
       </div>
 
       {candidates.length === 0 ? (

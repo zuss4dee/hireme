@@ -1,6 +1,13 @@
 /** Everything is stored in cents. Everything is displayed in dollars. */
 export const UNLOCK_PRICE = 2500; // $25 to unlock a candidate's contact details
 
+/**
+ * The floor to get on the board at all. Nobody is listed for free — a bid of 0
+ * means "profile created, not paid for yet" and stays off the leaderboard.
+ * Raise this if the board fills up with drive-by signups.
+ */
+export const MIN_BID = 100; // $1
+
 export function usd(cents: number, opts: { decimals?: boolean } = {}) {
   const dollars = cents / 100;
   const decimals = opts.decimals ?? !Number.isInteger(dollars);

@@ -3,6 +3,8 @@
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createCandidate, getCandidateByUserId, recordView, slugify, usernameTaken } from "./db";
+import { parseSkills } from "./skills";
+import { MIN_BID, parseDollars, usd } from "./money";
 import { getSessionUser, setDemoSession } from "./session";
 import { supabaseConfigured } from "./supabase";
 import type { Availability } from "./types";
@@ -41,6 +43,9 @@ export async function createProfileAction(_prev: FormState, formData: FormData):
   if (!portfolio) return { error: "A portfolio, site or GitHub is required. It's your CV now." };
   if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return { error: "Add a real email — that's what recruiters unlock." };
 
+  const openingBid = parseDollars(String(formData.get("bid") ?? ""));
+  if (openingBid < MIN_BID) return { error: `The board isn't free. Minimum opening bid is ${usd(MIN_BID)}.` };
+
   const user = await getSessionUser();
   if (supabaseConfigured && !user) redirect("/login?next=/join");
 
@@ -49,11 +54,7 @@ export async function createProfileAction(_prev: FormState, formData: FormData):
 
   const userId = user?.id ?? `demo-user-${Math.random().toString(36).slice(2, 10)}`;
   const username = await freeUsername(String(formData.get("username") ?? "") || name);
-  const skills = String(formData.get("skills") ?? "")
-    .split(",")
-    .map((s) => s.trim())
-    .filter(Boolean)
-    .slice(0, 8);
+  const skills = parseSkills(String(formData.get("skills") ?? ""));
   const availabilityRaw = String(formData.get("availability") ?? "open") as Availability;
   const availability = AVAILABILITIES.includes(availabilityRaw) ? availabilityRaw : "open";
 
@@ -78,7 +79,8 @@ export async function createProfileAction(_prev: FormState, formData: FormData):
   if (!supabaseConfigured) await setDemoSession({ id: userId, email, role: "candidate" });
 
   revalidatePath("/");
-  redirect(`/checkout?intent=bid&welcome=1`);
+  // The profile exists at $0 — it isn't on the board until this checkout clears.
+  redirect(`/checkout?intent=bid&welcome=1&amount=${openingBid}`);
 }
 
 /** Fired from the profile page when someone opens a candidate's portfolio. */
