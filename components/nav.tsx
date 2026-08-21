@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Logo } from "./logo";
 import { getMyListing } from "@/lib/owner";
 import { SITE_BRAND, SITE_TLD } from "@/lib/site";
 
@@ -9,9 +10,7 @@ export async function Nav() {
     <header className="sticky top-0 z-40 border-b border-line/60 bg-bg/80 backdrop-blur-xl">
       <div className="mx-auto flex w-full max-w-5xl items-center gap-3 px-4 py-3 sm:px-6">
         <Link href="/" className="group flex items-center gap-2">
-          <span className="grid h-8 w-8 place-items-center rounded-lg bg-lime text-lg font-black text-ink transition group-hover:rotate-6">
-            $
-          </span>
+          <Logo size={32} className="transition group-hover:-translate-y-0.5" />
           <span className="text-lg font-black tracking-tight">
             {SITE_BRAND}
             <span className="text-money">{SITE_TLD}</span>
