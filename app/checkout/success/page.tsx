@@ -2,14 +2,14 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Avatar } from "@/components/avatar";
 import { Confetti } from "@/components/confetti";
+import { ManageLink } from "@/components/manage-link";
 import { ShareButton } from "@/components/share-button";
-import { getCandidateById, getCandidateByUsername } from "@/lib/db";
+import { getCandidateByUsername, getCandidateForOwner, getContactEmail } from "@/lib/db";
 import { fulfil } from "@/lib/fulfil";
 import { usd } from "@/lib/money";
-import { getSessionUser } from "@/lib/session";
 import { stripe, stripeConfigured } from "@/lib/stripe";
 import type { Candidate, PaymentType } from "@/lib/types";
-import { shareText } from "@/lib/site";
+import { shareText, SITE_URL } from "@/lib/site";
 
 export const metadata: Metadata = { title: "Payment complete" };
 export const dynamic = "force-dynamic";
@@ -48,7 +48,7 @@ async function resolve(sp: Search): Promise<{ intent: PaymentType; amount: numbe
       intent,
       amount,
       company: meta.company || null,
-      candidate: candidateId ? await getCandidateById(candidateId) : null,
+      candidate: candidateId ? await getCandidateForOwner(candidateId) : null,
     };
   }
 
@@ -56,15 +56,16 @@ async function resolve(sp: Search): Promise<{ intent: PaymentType; amount: numbe
     intent: (sp.intent as PaymentType) ?? "bid",
     amount: Number(sp.amount ?? 0),
     company: sp.company || null,
-    candidate: sp.candidate ? await getCandidateByUsername(sp.candidate) : null,
+    candidate: sp.candidate ? await getCandidateForOwner((await getCandidateByUsername(sp.candidate))?.id ?? "") : null,
   };
 }
 
 export default async function SuccessPage({ searchParams }: { searchParams: Promise<Search> }) {
   const sp = await searchParams;
   const { intent, amount, candidate, company } = await resolve(sp);
-  const user = await getSessionUser();
   const isBid = intent === "bid";
+  // Paid for, so it can be shown once — this page is the delivery.
+  const contactEmail = !isBid && candidate ? await getContactEmail(candidate.id) : null;
 
   if (!candidate) {
     return (
@@ -94,6 +95,8 @@ export default async function SuccessPage({ searchParams }: { searchParams: Prom
             <p className="mt-3 text-sm text-muted">
               Paid {usd(amount)}. The board already updated — everyone can see it.
             </p>
+            {candidate.manage_token ? <ManageLink url={`${SITE_URL}/manage?key=${candidate.manage_token}`} /> : null}
+
             <div className="mt-7 flex flex-col justify-center gap-3 sm:flex-row">
               <ShareButton
                 url={`/profile/${candidate.username}`}
@@ -114,13 +117,13 @@ export default async function SuccessPage({ searchParams }: { searchParams: Prom
             </div>
             <div className="mx-auto mt-6 max-w-sm rounded-xl border border-lime/40 bg-lime/[0.08] p-4">
               <p className="text-[11px] font-bold uppercase tracking-wider text-muted">Contact</p>
-              <a href={`mailto:${candidate.contact_email}`} className="font-mono text-lg font-bold text-money underline">
-                {candidate.contact_email}
+              <a href={`mailto:${contactEmail}`} className="font-mono text-lg font-bold text-money underline">
+                {contactEmail}
               </a>
             </div>
             <p className="mt-4 text-sm text-muted">
               {candidate.name.split(" ")[0]} has been notified that{" "}
-              <span className="font-semibold text-fg">{company ?? user?.email ?? "a company"}</span> is interested
+              <span className="font-semibold text-fg">{company ?? "A company"}</span> is interested
               {intent === "interview" ? " and wants to interview them." : intent === "hire" ? " and wants to hire them." : "."}
             </p>
             <div className="mt-7 flex flex-col justify-center gap-3 sm:flex-row">

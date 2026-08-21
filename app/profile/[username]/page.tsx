@@ -7,9 +7,10 @@ import { PortfolioLink } from "@/components/portfolio-link";
 import { ShareButton } from "@/components/share-button";
 import { Stat } from "@/components/stat";
 import { ViewTracker } from "@/components/view-tracker";
-import { getCandidateByUsername, getRival, getStats, hasUnlocked, listBids } from "@/lib/db";
+import { getCandidateByUsername, getContactEmail, getRival, getStats, hasUnlocked, listBids } from "@/lib/db";
 import { compactNumber, usd, priceToBeat } from "@/lib/money";
-import { getSessionUser } from "@/lib/session";
+import { getVisitorId } from "@/lib/session";
+import { getMyListing } from "@/lib/owner";
 import { AVAILABILITY_LABEL } from "@/lib/types";
 import { SITE_NAME, shareText } from "@/lib/site";
 
@@ -40,19 +41,21 @@ export default async function ProfilePage({ params }: Props) {
   const c = await getCandidateByUsername(username);
   if (!c) notFound();
 
-  const user = await getSessionUser();
+  const [visitorId, mine] = await Promise.all([getVisitorId(), getMyListing()]);
   const [stats, rival, bids, unlocked] = await Promise.all([
     getStats(c.id),
     getRival(c),
     listBids(c.id),
-    hasUnlocked(user?.id ?? null, c.id),
+    hasUnlocked(visitorId, c.id),
   ]);
-  const isOwner = user?.id === c.user_id;
+  const isOwner = mine?.id === c.id;
+  // Only fetched once the viewer has actually paid for it.
+  const contactEmail = unlocked ? await getContactEmail(c.id) : null;
 
   return (
     <div className="flex flex-col gap-6 pt-4">
       <Suspense fallback={null}>
-        <ViewTracker candidateId={c.id} ownerId={c.user_id} />
+        <ViewTracker candidateId={c.id} isOwner={isOwner} />
       </Suspense>
 
       <Link href="/" className="text-sm font-semibold text-muted transition hover:text-money">← back to the board</Link>

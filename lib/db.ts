@@ -3,8 +3,13 @@ import { demoDB, demoRecomputeRanks, demoStats } from "./demo-store";
 import { adminClient, serverClient, supabaseConfigured } from "./supabase";
 import type { Bid, Candidate, CandidateStats, Interest, InterestType, PaymentType } from "./types";
 
+/** Safe to read with the public key. contact_email and manage_token are
+ *  deliberately absent — Postgres denies them to `anon` at column level. */
 const CANDIDATE_COLS =
-  "id,user_id,name,username,photo,title,bio,location,portfolio_url,linkedin_url,github_url,twitter_url,skills,current_bid,rank,availability,hidden,contact_email,created_at";
+  "id,user_id,name,username,photo,title,bio,location,portfolio_url,linkedin_url,github_url,twitter_url,skills,current_bid,rank,availability,hidden,created_at";
+
+/** Service-role only. */
+const CANDIDATE_COLS_PRIVATE = `${CANDIDATE_COLS},contact_email,manage_token`;
 
 function uid(prefix: string) {
   return `${prefix}-${Math.random().toString(36).slice(2, 10)}${Date.now().toString(36)}`;
@@ -73,16 +78,6 @@ export async function getCandidateById(id: string): Promise<Candidate | null> {
   if (!supabaseConfigured) return demoDB().candidates.find((c) => c.id === id) ?? null;
   const sb = await serverClient();
   const { data } = await sb.from("candidate_profiles").select(CANDIDATE_COLS).eq("id", id).maybeSingle();
-  return (data as Candidate) ?? null;
-}
-
-export async function getCandidateByUserId(userId: string): Promise<Candidate | null> {
-  if (!supabaseConfigured) {
-    demoRecomputeRanks();
-    return demoDB().candidates.find((c) => c.user_id === userId) ?? null;
-  }
-  const sb = await serverClient();
-  const { data } = await sb.from("candidate_profiles").select(CANDIDATE_COLS).eq("user_id", userId).maybeSingle();
   return (data as Candidate) ?? null;
 }
 
@@ -192,6 +187,7 @@ export async function createCandidate(input: NewCandidate): Promise<Candidate> {
       current_bid: input.current_bid ?? 0,
       hidden: false,
       id: uid("cand"),
+      manage_token: uid("tok") + uid("tok"),
       rank: null,
       created_at: new Date().toISOString(),
     };
@@ -199,8 +195,13 @@ export async function createCandidate(input: NewCandidate): Promise<Candidate> {
     demoRecomputeRanks();
     return row;
   }
-  const sb = await serverClient();
-  const { data, error } = await sb.from("candidate_profiles").insert({ ...input, current_bid: input.current_bid ?? 0 }).select(CANDIDATE_COLS).single();
+  // Service role: the insert has to return manage_token, which anon cannot read.
+  const sb = adminClient();
+  const { data, error } = await sb
+    .from("candidate_profiles")
+    .insert({ ...input, current_bid: input.current_bid ?? 0 })
+    .select(CANDIDATE_COLS_PRIVATE)
+    .single();
   if (error) throw error;
   return data as Candidate;
 }
@@ -212,7 +213,7 @@ export async function updateCandidate(id: string, patch: Partial<Candidate>): Pr
     demoRecomputeRanks();
     return;
   }
-  const sb = await serverClient();
+  const sb = adminClient();
   await sb.from("candidate_profiles").update(patch).eq("id", id);
 }
 
@@ -254,7 +255,7 @@ export async function recordView(args: {
     demoDB().views.push(row);
     return;
   }
-  const sb = await serverClient();
+  const sb = adminClient();
   await sb.from("profile_views").insert(row);
 }
 
@@ -381,6 +382,55 @@ export async function recentActivity(limit = 12): Promise<ActivityItem[]> {
 }
 
 
+// ------------------------------------------------------- token ownership
+
+/** Resolves a listing from its secret manage token. Service role only. */
+export async function getCandidateByManageToken(token: string): Promise<Candidate | null> {
+  if (!token) return null;
+
+  if (!supabaseConfigured) {
+    demoRecomputeRanks();
+    return demoDB().candidates.find((c) => c.manage_token === token) ?? null;
+  }
+  const sb = adminClient();
+  const { data } = await sb
+    .from("candidate_profiles")
+    .select(CANDIDATE_COLS_PRIVATE)
+    .eq("manage_token", token)
+    .maybeSingle();
+  return (data as Candidate) ?? null;
+}
+
+/** Full row including secrets. Service role only — used right after payment. */
+export async function getCandidateForOwner(id: string): Promise<Candidate | null> {
+  if (!id) return null;
+  if (!supabaseConfigured) {
+    demoRecomputeRanks();
+    return demoDB().candidates.find((c) => c.id === id) ?? null;
+  }
+  const sb = adminClient();
+  const { data } = await sb
+    .from("candidate_profiles")
+    .select(CANDIDATE_COLS_PRIVATE)
+    .eq("id", id)
+    .maybeSingle();
+  return (data as Candidate) ?? null;
+}
+
+/** The thing recruiters pay for. Never reachable with the public key. */
+export async function getContactEmail(candidateId: string): Promise<string | null> {
+  if (!supabaseConfigured) {
+    return demoDB().candidates.find((c) => c.id === candidateId)?.contact_email ?? null;
+  }
+  const sb = adminClient();
+  const { data } = await sb
+    .from("candidate_profiles")
+    .select("contact_email")
+    .eq("id", candidateId)
+    .maybeSingle();
+  return (data as { contact_email: string | null } | null)?.contact_email ?? null;
+}
+
 // ------------------------------------------------------------- moderation
 
 /** Everyone, including unpaid and hidden rows. Admin views only. */
@@ -393,7 +443,7 @@ export async function listAllCandidates(): Promise<Candidate[]> {
   const sb = adminClient();
   const { data, error } = await sb
     .from("candidate_profiles")
-    .select(CANDIDATE_COLS)
+    .select(CANDIDATE_COLS_PRIVATE)
     .order("hidden", { ascending: false })
     .order("current_bid", { ascending: false })
     .limit(500);

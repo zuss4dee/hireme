@@ -1,28 +1,27 @@
 import { recordView } from "@/lib/db";
-import { getSessionUser } from "@/lib/session";
+import { getVisitorId } from "@/lib/session";
 
 /**
  * Server component that logs a profile view as a side effect of rendering.
- * Rendered inside <Suspense> so it never delays the page. Owners viewing
- * themselves don't inflate their own numbers.
+ * Rendered inside <Suspense> so it never delays the page.
  */
 export async function ViewTracker({
   candidateId,
-  ownerId,
+  isOwner = false,
   source = "profile",
 }: {
   candidateId: string;
-  ownerId: string;
+  isOwner?: boolean;
   source?: "profile" | "recruiter";
 }) {
-  const user = await getSessionUser();
-  if (user?.id === ownerId) return null;
+  // Owners don't inflate their own numbers.
+  if (isOwner) return null;
 
   await recordView({
     candidateId,
-    viewerId: user?.id ?? null,
-    viewerRole: user?.role ?? "anon",
-    source: user?.role === "recruiter" ? "recruiter" : source,
+    viewerId: await getVisitorId(),
+    viewerRole: "anon",
+    source,
   });
   return null;
 }

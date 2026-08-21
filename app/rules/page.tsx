@@ -30,6 +30,7 @@ const SECTIONS = [
       "Your listing goes public as soon as the payment clears. That is what claims the rank.",
       "Until it clears, your profile is saved but invisible.",
       "Your contact details stay hidden until a recruiter pays to unlock them.",
+      "There are no accounts. You get a private manage link — keep it, because it is the only way back to your listing.",
     ],
   },
   {

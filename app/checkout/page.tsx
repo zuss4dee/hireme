@@ -3,9 +3,9 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { Avatar } from "@/components/avatar";
 import { CheckoutForm } from "@/components/checkout-form";
-import { boardBids, getCandidateByUserId, getCandidateByUsername, getRival, listCandidates } from "@/lib/db";
+import { boardBids, getCandidateByUsername, getRival, listCandidates } from "@/lib/db";
 import { usd, priceToBeat, MIN_BID, UNLOCK_PRICE } from "@/lib/money";
-import { getSessionUser } from "@/lib/session";
+import { getMyListing } from "@/lib/owner";
 import { stripeConfigured } from "@/lib/stripe";
 import type { PaymentType } from "@/lib/types";
 
@@ -31,8 +31,7 @@ export default async function CheckoutPage({
 
   // ------------------------------------------------------------- bid flow
   if (intent === "bid") {
-    const user = await getSessionUser();
-    const mine = user ? await getCandidateByUserId(user.id) : null;
+    const mine = await getMyListing();
     if (!mine) redirect("/join");
 
     const board = await listCandidates({ limit: 100 });

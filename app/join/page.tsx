@@ -2,20 +2,15 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { JoinForm } from "@/components/join-form";
-import { boardBids, getCandidateByUserId } from "@/lib/db";
-import { getSessionUser } from "@/lib/session";
-import { supabaseConfigured } from "@/lib/supabase";
+import { getMyListing } from "@/lib/owner";
+import { boardBids } from "@/lib/db";
 
 export const metadata: Metadata = { title: "Put yourself on the board" };
 export const dynamic = "force-dynamic";
 
 export default async function JoinPage() {
-  const user = await getSessionUser();
-  if (user) {
-    const existing = await getCandidateByUserId(user.id);
-    if (existing) redirect("/dashboard");
-  }
-  if (supabaseConfigured && !user) redirect("/login?next=/join");
+  // Already own a listing on this device? Manage it instead of making another.
+  if (await getMyListing()) redirect("/dashboard");
 
   const bids = await boardBids();
 

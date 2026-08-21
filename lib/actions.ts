@@ -2,11 +2,11 @@
 
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
-import { createCandidate, getCandidateByUserId, recordView, slugify, usernameTaken } from "./db";
+import { createCandidate, recordView, slugify, usernameTaken } from "./db";
 import { parseSkills } from "./skills";
 import { MIN_BID, parseDollars, usd } from "./money";
-import { getSessionUser, setDemoSession } from "./session";
-import { supabaseConfigured } from "./supabase";
+import { ensureVisitorId, getVisitorId, setManageToken } from "./session";
+import { getMyListing } from "./owner";
 import type { Availability } from "./types";
 
 export type FormState = { error?: string } | undefined;
@@ -46,19 +46,15 @@ export async function createProfileAction(_prev: FormState, formData: FormData):
   const openingBid = parseDollars(String(formData.get("bid") ?? ""));
   if (openingBid < MIN_BID) return { error: `The board isn't free. Minimum opening bid is ${usd(MIN_BID)}.` };
 
-  const user = await getSessionUser();
-  if (supabaseConfigured && !user) redirect("/login?next=/join");
+  if (await getMyListing()) redirect("/dashboard");
 
-  const existing = user ? await getCandidateByUserId(user.id) : null;
-  if (existing) redirect(`/dashboard`);
-
-  const userId = user?.id ?? `demo-user-${Math.random().toString(36).slice(2, 10)}`;
+  const userId = await ensureVisitorId();
   const username = await freeUsername(String(formData.get("username") ?? "") || name);
   const skills = parseSkills(String(formData.get("skills") ?? ""));
   const availabilityRaw = String(formData.get("availability") ?? "open") as Availability;
   const availability = AVAILABILITIES.includes(availabilityRaw) ? availabilityRaw : "open";
 
-  await createCandidate({
+  const created = await createCandidate({
     user_id: userId,
     name,
     username,
@@ -76,7 +72,9 @@ export async function createProfileAction(_prev: FormState, formData: FormData):
     current_bid: 0,
   });
 
-  if (!supabaseConfigured) await setDemoSession({ id: userId, email, role: "candidate" });
+  // The token is the only way back to this listing — hand it over immediately,
+  // before payment, so a dropped checkout doesn't strand the profile.
+  if (created.manage_token) await setManageToken(created.manage_token);
 
   revalidatePath("/");
   // The profile exists at $0 — it isn't on the board until this checkout clears.
@@ -85,17 +83,6 @@ export async function createProfileAction(_prev: FormState, formData: FormData):
 
 /** Fired from the profile page when someone opens a candidate's portfolio. */
 export async function trackPortfolioClick(candidateId: string) {
-  const user = await getSessionUser();
-  await recordView({ candidateId, viewerId: user?.id ?? null, viewerRole: user?.role ?? "anon", source: "portfolio_click" });
+  await recordView({ candidateId, viewerId: await getVisitorId(), viewerRole: "anon", source: "portfolio_click" });
 }
 
-/** Lets a browsing user flip into recruiter mode in demo builds. */
-export async function becomeRecruiter() {
-  if (supabaseConfigured) return;
-  const user = await getSessionUser();
-  await setDemoSession({
-    id: user?.id ?? `demo-recruiter-${Math.random().toString(36).slice(2, 10)}`,
-    email: user?.email,
-    role: "recruiter",
-  });
-}

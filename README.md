@@ -22,9 +22,10 @@ outbid, unlock, dashboard analytics) is clickable straight away.
 
 1. Copy `.env.example` to `.env.local`.
 2. **Supabase** — create a project, then paste `supabase/schema.sql` into the SQL editor and run it.
-   That creates every table, the RLS policies, the ranking function and the atomic `place_bid` RPC.
-   Add the three Supabase keys. If you ran an earlier copy of the schema, apply
-   `supabase/migrations/001_polar.sql` too (it only renames a column).
+   That creates every table, the RLS policies, the column grants, the ranking function and the
+   atomic `place_bid` RPC. Add the three Supabase keys. Supabase Auth is **not** used — no
+   redirect URLs to configure. If you have an older database, apply everything in
+   `supabase/migrations/` in order.
 3. **Stripe** — add `STRIPE_SECRET_KEY`. There is no product to create: every checkout builds
    an inline `price_data` line item, so the amount is always the one the server computed and
    the buyer can't change it. For local webhooks:
@@ -50,7 +51,8 @@ when its secret key is present. Either can be enabled independently.
 | `/` | Leaderboard, search, live bid ticker |
 | `/join` | Create a profile and place an opening bid (live preview, no CV) |
 | `/profile/[username]` | Public profile — rank, bid, links, stats, hire buttons |
-| `/dashboard` | Candidate analytics + the "outbid them" loop |
+| `/dashboard` | Candidate analytics + the "outbid them" loop (manage-token cookie) |
+| `/manage?key=…` | Exchanges a manage token for a cookie — this replaces logging in |
 | `/recruiter` | Free browsing grid — filter by status, skill, location and bid range |
 | `/checkout` | Bids and recruiter unlocks |
 | `/rules` | Ranking rules, refunds, chargebacks, moderation |
@@ -83,6 +85,24 @@ vercel
 
 Add the same environment variables in the Vercel project, then point a Stripe webhook
 endpoint at `https://your-domain/api/stripe/webhook` for `checkout.session.completed`.
+
+## No accounts
+
+There are no logins, passwords or magic links. Ownership of a listing is a **secret manage
+token** minted when the profile is created:
+
+- It's set as an httpOnly cookie immediately, so the dashboard works in that browser.
+- It's also handed over as `/manage?key=<token>` on the success page, so a lost cookie or a
+  new device doesn't strand the listing.
+- Recruiters are fully anonymous. A `hireme_vid` cookie remembers which candidates they
+  unlocked so the contact details stay visible on return visits.
+
+`manage_token` and `contact_email` are **not readable with the public anon key** —
+`grant select (…)` on `candidate_profiles` lists only the public columns. That matters more
+than it looks: RLS is row-level and cannot stop `?select=contact_email`, and a column-level
+`REVOKE` does nothing against a table-level grant. Without the column grant, anyone could
+dump every candidate's email with the key that ships in the browser bundle and bypass the
+$25 unlock entirely.
 
 ## Moderation
 

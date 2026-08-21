@@ -23,6 +23,8 @@ export type Candidate = {
   /** Moderated off the board. Keeps its data, holds no rank. */
   hidden: boolean;
   contact_email: string | null;
+  /** Secret. Present only on service-role reads. */
+  manage_token?: string;
   created_at: string;
 };
 

@@ -161,6 +161,7 @@ export function seedCandidates(): Candidate[] {
     availability: s.availability,
     hidden: false,
     contact_email: `${s.username}@example.com`,
+    manage_token: `demo-token-${s.username}`,
     created_at: new Date(now - (SEEDS.length - i) * 86_400_000).toISOString(),
   }));
 }

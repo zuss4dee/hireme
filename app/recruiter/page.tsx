@@ -3,12 +3,9 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { CandidateCard } from "@/components/candidate-card";
 import { FilterBar, type FilterGroup } from "@/components/filter-bar";
-import { RecruiterMode } from "@/components/recruiter-mode";
 import { Search } from "@/components/search";
 import { listCandidates } from "@/lib/db";
 import { usd, UNLOCK_PRICE } from "@/lib/money";
-import { getSessionUser } from "@/lib/session";
-import { supabaseConfigured } from "@/lib/supabase";
 
 export const metadata: Metadata = { title: "Browse candidates" };
 export const dynamic = "force-dynamic";
@@ -43,7 +40,6 @@ export default async function RecruiterPage({
   searchParams: Promise<{ q?: string; status?: string; skill?: string; location?: string; budget?: string }>;
 }) {
   const { q, status, skill, location, budget } = await searchParams;
-  const user = await getSessionUser();
   const all = await listCandidates({ q });
 
   const [budgetMin, budgetMax] = (budget ?? "").split("-").map((n) => (n === "" ? undefined : Number(n)));
@@ -87,7 +83,6 @@ export default async function RecruiterPage({
               <span className="font-black text-fg">{usd(UNLOCK_PRICE)}</span> only when you want to actually talk to someone.
             </p>
           </div>
-          {!supabaseConfigured ? <RecruiterMode active={user?.role === "recruiter"} /> : null}
         </div>
 
         <div className="relative mt-6 grid gap-3 sm:grid-cols-3">

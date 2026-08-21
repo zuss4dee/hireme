@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
-import { getCandidateById, getCandidateByUserId } from "@/lib/db";
+import { getCandidateById } from "@/lib/db";
 import { fulfil } from "@/lib/fulfil";
-import { getSessionUser, setDemoSession } from "@/lib/session";
+import { ensureVisitorId } from "@/lib/session";
+import { getMyListing } from "@/lib/owner";
 import { automaticTax, lineItemFor, stripe, stripeConfigured } from "@/lib/stripe";
 import { UNLOCK_PRICE } from "@/lib/money";
-import { supabaseConfigured } from "@/lib/supabase";
 import type { PaymentType } from "@/lib/types";
 
 const INTENTS: PaymentType[] = ["bid", "unlock", "interview", "hire"];
@@ -34,19 +34,18 @@ export async function POST(req: Request) {
   const candidate = body.candidateId ? await getCandidateById(body.candidateId) : null;
   if (!candidate) return NextResponse.json({ error: "Candidate not found" }, { status: 404 });
 
-  const user = await getSessionUser();
+  // No accounts: the payer is whoever holds the manage token (a candidate
+  // raising their own bid) or an anonymous visitor id (a recruiter).
+  const visitorId = await ensureVisitorId();
 
   if (intent === "bid") {
-    const mine = user ? await getCandidateByUserId(user.id) : null;
+    const mine = await getMyListing();
     if (!mine || mine.id !== candidate.id) {
       return NextResponse.json({ error: "You can only raise your own bid.", redirect: "/join" }, { status: 403 });
     }
     if (amount <= candidate.current_bid) {
       return NextResponse.json({ error: "That doesn't beat your current bid." }, { status: 400 });
     }
-  } else if (!user && !supabaseConfigured) {
-    // Demo mode: browsing recruiters get an identity the moment they pay.
-    await setDemoSession({ id: `demo-recruiter-${Math.random().toString(36).slice(2, 10)}`, role: "recruiter" });
   }
 
   // Refusing here as well as in the UI keeps the record honest: no payment is
@@ -60,11 +59,10 @@ export async function POST(req: Request) {
 
   // ---------------------------------------------------------- demo payments
   if (!stripeConfigured) {
-    const payer = await getSessionUser();
     const result = await fulfil({
       intent,
       candidateId: candidate.id,
-      userId: payer?.id ?? null,
+      userId: visitorId,
       amount,
       company,
       message,
@@ -80,7 +78,6 @@ export async function POST(req: Request) {
   const session = await stripe().checkout.sessions.create({
     mode: "payment",
     line_items: [lineItemFor(intent, candidate.name, amount)],
-    customer_email: user?.email || undefined,
     success_url: `${origin(req)}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
     cancel_url: `${origin(req)}/profile/${candidate.username}`,
     // Stripe Tax needs an address to work out what to charge.
@@ -88,7 +85,7 @@ export async function POST(req: Request) {
     metadata: {
       intent,
       candidate_id: candidate.id,
-      user_id: user?.id ?? "",
+      user_id: visitorId,
       amount: String(amount),
       company: company ?? "",
       message: message ?? "",

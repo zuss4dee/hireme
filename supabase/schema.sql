@@ -3,18 +3,11 @@
 
 create extension if not exists "pgcrypto";
 
--- ---------------------------------------------------------------- users
-create table if not exists public.users (
-  id          uuid primary key references auth.users(id) on delete cascade,
-  email       text not null,
-  role        text not null default 'candidate' check (role in ('candidate','recruiter')),
-  created_at  timestamptz not null default now()
-);
-
 -- ------------------------------------------------- candidate_profiles
 create table if not exists public.candidate_profiles (
   id            uuid primary key default gen_random_uuid(),
-  user_id       uuid not null unique references public.users(id) on delete cascade,
+  user_id       text,                                 -- anonymous visitor id, not an account
+  manage_token  text not null unique default encode(gen_random_bytes(24), 'hex'),
   name          text not null,
   username      text not null unique,
   photo         text,
@@ -41,7 +34,7 @@ create index if not exists candidate_profiles_rank_idx on public.candidate_profi
 create table if not exists public.bids (
   id           uuid primary key default gen_random_uuid(),
   candidate_id uuid not null references public.candidate_profiles(id) on delete cascade,
-  user_id      uuid references public.users(id) on delete set null,
+  user_id      text,
   amount       integer not null check (amount > 0),   -- cents
   created_at   timestamptz not null default now()
 );
@@ -51,7 +44,7 @@ create index if not exists bids_candidate_idx on public.bids (candidate_id, crea
 create table if not exists public.profile_views (
   id           uuid primary key default gen_random_uuid(),
   candidate_id uuid not null references public.candidate_profiles(id) on delete cascade,
-  viewer_id    uuid references public.users(id) on delete set null,
+  viewer_id    text,
   viewer_role  text,          -- 'candidate' | 'recruiter' | 'anon'
   source       text,          -- 'profile' | 'portfolio_click' | 'recruiter'
   created_at   timestamptz not null default now()
@@ -62,7 +55,7 @@ create index if not exists profile_views_candidate_idx on public.profile_views (
 create table if not exists public.recruiter_interest (
   id           uuid primary key default gen_random_uuid(),
   candidate_id uuid not null references public.candidate_profiles(id) on delete cascade,
-  recruiter_id uuid references public.users(id) on delete set null,
+  recruiter_id text,
   company      text,
   message      text,
   type         text not null check (type in ('unlock','interview','hire')),
@@ -73,7 +66,7 @@ create index if not exists recruiter_interest_candidate_idx on public.recruiter_
 -- ------------------------------------------------------------- payments
 create table if not exists public.payments (
   id           uuid primary key default gen_random_uuid(),
-  user_id      uuid references public.users(id) on delete set null,
+  user_id      text,
   candidate_id uuid references public.candidate_profiles(id) on delete set null,
   amount       integer not null,                    -- cents
   payment_type text not null check (payment_type in ('bid','unlock','interview','hire')),
@@ -139,65 +132,35 @@ after insert or delete on public.candidate_profiles
 for each statement execute function public.trg_recompute_ranks();
 
 -- ------------------------------------------------------------------- RLS
-alter table public.users              enable row level security;
 alter table public.candidate_profiles enable row level security;
 alter table public.bids               enable row level security;
 alter table public.profile_views      enable row level security;
 alter table public.recruiter_interest enable row level security;
 alter table public.payments           enable row level security;
 
--- users: you see and edit only yourself.
-drop policy if exists users_self_read on public.users;
-create policy users_self_read on public.users for select using (auth.uid() = id);
-drop policy if exists users_self_write on public.users;
-create policy users_self_write on public.users for update using (auth.uid() = id);
-drop policy if exists users_self_insert on public.users;
-create policy users_self_insert on public.users for insert with check (auth.uid() = id);
-
--- candidate_profiles: the leaderboard is public; only the owner writes.
+-- The board is public; everything else goes through the service role.
 drop policy if exists profiles_public_read on public.candidate_profiles;
 create policy profiles_public_read on public.candidate_profiles for select using (true);
-drop policy if exists profiles_owner_insert on public.candidate_profiles;
-create policy profiles_owner_insert on public.candidate_profiles for insert with check (auth.uid() = user_id);
-drop policy if exists profiles_owner_update on public.candidate_profiles;
-create policy profiles_owner_update on public.candidate_profiles for update using (auth.uid() = user_id);
 
--- bids are public (that is the whole game); writes go through place_bid/service role.
 drop policy if exists bids_public_read on public.bids;
 create policy bids_public_read on public.bids for select using (true);
 
--- views: anyone can log one, only the candidate can read their own.
-drop policy if exists views_insert_any on public.profile_views;
-create policy views_insert_any on public.profile_views for insert with check (true);
-drop policy if exists views_owner_read on public.profile_views;
-create policy views_owner_read on public.profile_views for select
-  using (exists (select 1 from candidate_profiles p
-                  where p.id = candidate_id and p.user_id = auth.uid()));
+-- No policies on profile_views, recruiter_interest or payments: RLS is on with
+-- no policy, so the public key can read nothing at all. The server writes them
+-- with the service role, which bypasses RLS.
 
--- recruiter interest: candidate sees who wants them, recruiter sees their own.
-drop policy if exists interest_owner_read on public.recruiter_interest;
-create policy interest_owner_read on public.recruiter_interest for select
-  using (recruiter_id = auth.uid()
-      or exists (select 1 from candidate_profiles p
-                  where p.id = candidate_id and p.user_id = auth.uid()));
+-- ==================================================== column-level secrets
+-- RLS is row-level and cannot stop `?select=contact_email`. A column-level
+-- REVOKE also does nothing against a table-level grant, so drop the table grant
+-- and give back only the public columns.
+revoke select on public.candidate_profiles from anon, authenticated;
 
--- payments: only your own.
-drop policy if exists payments_owner_read on public.payments;
-create policy payments_owner_read on public.payments for select using (user_id = auth.uid());
+grant select (
+  id, user_id, name, username, photo, title, bio, location,
+  portfolio_url, linkedin_url, github_url, twitter_url,
+  skills, current_bid, rank, availability, hidden, created_at
+) on public.candidate_profiles to anon, authenticated;
 
--- ------------------------------------------------------ new-user trigger
-create or replace function public.handle_new_user() returns trigger
-language plpgsql security definer set search_path = public as $$
-begin
-  insert into public.users (id, email, role)
-  values (new.id, coalesce(new.email, ''), coalesce(new.raw_user_meta_data->>'role', 'candidate'))
-  on conflict (id) do nothing;
-  return new;
-end;
-$$;
-drop trigger if exists on_auth_user_created on auth.users;
-create trigger on_auth_user_created
-after insert on auth.users for each row execute function public.handle_new_user();
 
 -- ------------------------------------------------------- function grants
 -- SECURITY DEFINER functions are EXECUTE-able by PUBLIC by default, which
@@ -206,7 +169,6 @@ after insert on auth.users for each row execute function public.handle_new_user(
 revoke execute on function public.place_bid(uuid, uuid, integer) from public, anon, authenticated;
 revoke execute on function public.recompute_ranks()              from public, anon, authenticated;
 revoke execute on function public.trg_recompute_ranks()          from public, anon, authenticated;
-revoke execute on function public.handle_new_user()              from public, anon, authenticated;
 
 grant execute on function public.place_bid(uuid, uuid, integer) to service_role;
 grant execute on function public.recompute_ranks()              to service_role;

@@ -1,29 +1,12 @@
-import { NextResponse, type NextRequest } from "next/server";
-import { createServerClient } from "@supabase/ssr";
+import { NextResponse } from "next/server";
 
-const URL_ = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
-const KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "";
-
-/** Keeps the Supabase auth cookie fresh. No-op when running in demo mode. */
-export async function middleware(request: NextRequest) {
-  if (!URL_ || !KEY) return NextResponse.next();
-
-  let response = NextResponse.next({ request });
-  const supabase = createServerClient(URL_, KEY, {
-    cookies: {
-      getAll: () => request.cookies.getAll(),
-      setAll: (list) => {
-        list.forEach(({ name, value }) => request.cookies.set(name, value));
-        response = NextResponse.next({ request });
-        list.forEach(({ name, value, options }) => response.cookies.set(name, value, options));
-      },
-    },
-  });
-
-  await supabase.auth.getUser();
-  return response;
+/**
+ * Nothing to do per-request any more: there are no logins, so there is no
+ * session to refresh. Kept as a no-op with an empty matcher so adding
+ * middleware later doesn't mean re-wiring the app.
+ */
+export function middleware() {
+  return NextResponse.next();
 }
 
-export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico|api/stripe|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)"],
-};
+export const config = { matcher: [] };

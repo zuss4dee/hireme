@@ -1,11 +1,9 @@
 import Link from "next/link";
-import { getSessionUser } from "@/lib/session";
-import { getCandidateByUserId } from "@/lib/db";
+import { getMyListing } from "@/lib/owner";
 import { SITE_BRAND, SITE_TLD } from "@/lib/site";
 
 export async function Nav() {
-  const user = await getSessionUser();
-  const me = user ? await getCandidateByUserId(user.id) : null;
+  const me = await getMyListing();
 
   return (
     <header className="sticky top-0 z-40 border-b border-line/60 bg-bg/80 backdrop-blur-xl">

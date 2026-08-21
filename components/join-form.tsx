@@ -160,7 +160,10 @@ export function JoinForm({ boardBids }: { boardBids: number[] }) {
         </div>
 
         <Submit />
-        <p className="text-center text-xs text-muted">No free listings. Your bid is your position.</p>
+        <p className="text-center text-xs text-muted">
+          No free listings, and no account to create — you&apos;ll get a private link to manage your
+          listing after paying.
+        </p>
       </form>
 
       <aside className="lg:sticky lg:top-24 lg:h-fit">
