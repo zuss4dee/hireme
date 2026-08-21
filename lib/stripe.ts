@@ -26,6 +26,20 @@ export function stripe(): Stripe {
  * `price_data` line item rather than a catalog price. The buyer cannot edit
  * it, so the figure the server computed is the figure that gets charged.
  */
+/**
+ * Managed Payments is on by default for this account, and it requires a product
+ * tax code on every inline line item. Stripe warns against the generic
+ * "Electronically Supplied Services" code for US sales because it misses
+ * state-level distinctions, so we use the specific SaaS codes and split them by
+ * who is actually buying: candidates are individuals, recruiters are businesses.
+ */
+const TAX_CODE: Record<PaymentType, string> = {
+  bid: "txcd_10103000", // SaaS - Personal Use
+  unlock: "txcd_10103001", // SaaS - Business Use
+  interview: "txcd_10103001",
+  hire: "txcd_10103001",
+};
+
 export function lineItemFor(intent: PaymentType, candidateName: string, amount: number): Stripe.Checkout.SessionCreateParams.LineItem {
   const copy: Record<PaymentType, { name: string; description: string }> = {
     bid: {
@@ -51,7 +65,7 @@ export function lineItemFor(intent: PaymentType, candidateName: string, amount: 
     price_data: {
       currency: "usd",
       unit_amount: amount,
-      product_data: copy[intent],
+      product_data: { ...copy[intent], tax_code: TAX_CODE[intent] },
     },
   };
 }
