@@ -24,7 +24,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (!c) return { title: "Not on the board" };
   return {
     title: `${c.name} — ${c.title} · #${c.rank ?? "?"}`,
-    description: `${c.name} is #${c.rank ?? "?"} on ${SITE_NAME} at ${usd(c.current_bid)}. ${c.bio ?? ""}`.trim(),
+    description: `${c.name} is #${c.rank ?? "?"} on ${SITE_NAME}. ${c.bio ?? ""}`.trim(),
     openGraph: { title: `${c.name} is #${c.rank ?? "?"} on ${SITE_NAME}`, description: c.bio ?? c.title },
   };
 }
@@ -58,19 +58,19 @@ export default async function ProfilePage({ params }: Props) {
         <ViewTracker candidateId={c.id} isOwner={isOwner} />
       </Suspense>
 
-      <Link href="/" className="text-sm font-semibold text-muted transition hover:text-money">← back to the board</Link>
+      <Link href="/" className="text-sm font-semibold text-muted transition hover:text-money">← back to the leaderboard</Link>
 
       {c.hidden ? (
         <p className="rounded-xl border border-pink/40 bg-pink/10 px-4 py-3 text-sm font-semibold text-pink">
-          This listing has been removed from the board by a moderator. It no longer appears in the
-          leaderboard, search or recruiter filters.
+          This listing has been removed by a moderator. It no longer appears on the leaderboard or
+          in search.
         </p>
       ) : null}
 
       {c.current_bid === 0 ? (
         <p className="rounded-xl border border-gold/40 bg-gold/10 px-4 py-3 text-sm font-semibold text-gold">
-          This profile isn&apos;t on the board yet — no bid has been placed, so it won&apos;t show up in
-          the leaderboard or in recruiter search.
+          This profile isn&apos;t on the leaderboard yet — no position claimed, so it won&apos;t show
+          up in the rankings or in search.
         </p>
       ) : null}
 
@@ -81,13 +81,18 @@ export default async function ProfilePage({ params }: Props) {
 
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-2">
-              <span className="chip border-gold/40 bg-gold/10 font-black text-gold">#{c.rank ?? "—"} on the board</span>
+              <span className="chip border-gold/40 bg-gold/10 font-black text-gold">#{c.rank ?? "—"} on the leaderboard</span>
               <span className="chip border-lime/30 text-money">{AVAILABILITY_LABEL[c.availability]}</span>
               {c.location ? <span className="chip">📍 {c.location}</span> : null}
             </div>
             <h1 className="mt-3 text-3xl font-black tracking-tighter sm:text-5xl">{c.name}</h1>
             <p className="mt-1 text-lg font-semibold text-muted">{c.title}</p>
-            {c.bio ? <p className="mt-4 max-w-2xl text-fg/80">{c.bio}</p> : null}
+            {c.bio ? (
+              <div className="mt-5 max-w-2xl">
+                <h2 className="text-[11px] font-black uppercase tracking-widest text-muted">Why hire me</h2>
+                <p className="mt-1.5 text-fg/80">{c.bio}</p>
+              </div>
+            ) : null}
 
             <div className="mt-5 flex flex-wrap gap-2">
               {c.skills.map((s) => (
@@ -95,7 +100,8 @@ export default async function ProfilePage({ params }: Props) {
               ))}
             </div>
 
-            <div className="mt-5 flex flex-wrap gap-2">
+            <h2 className="mt-6 text-[11px] font-black uppercase tracking-widest text-muted">Proof</h2>
+            <div className="mt-2 flex flex-wrap gap-2">
               {SOCIALS.map(({ key, label, icon }) => {
                 const href = c[key];
                 if (!href) return null;
@@ -116,7 +122,7 @@ export default async function ProfilePage({ params }: Props) {
                 {usd(priceToBeat(rival.current_bid))} beats {rival.name.split(" ")[0]} for #{rival.rank}
               </p>
             ) : (
-              <p className="mt-1 text-xs font-semibold text-gold">Top of the board 👑</p>
+              <p className="mt-1 text-xs font-semibold text-gold">Top of the leaderboard 👑</p>
             )}
           </div>
         </div>
@@ -140,7 +146,7 @@ export default async function ProfilePage({ params }: Props) {
                 Hire this person
               </Link>
               <Link href={`/checkout?intent=bid&beat=${c.username}`} className="btn btn-ghost flex-1">
-                Outbid for #{c.rank ?? "?"}
+                Take this spot
               </Link>
             </>
           )}
@@ -154,22 +160,22 @@ export default async function ProfilePage({ params }: Props) {
             </p>
           ) : (
             <p className="text-sm text-muted">
-              🔒 Contact details are hidden. Recruiters unlock them at checkout — the candidate gets notified the moment you do.
+              🔒 Contact details are hidden. Unlock them at checkout — they get notified the moment you do.
             </p>
           )}
         </div>
       </section>
 
       <section className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <Stat label="Profile views" value={compactNumber(stats.views)} accent="white" />
-        <Stat label="Recruiter views" value={compactNumber(stats.recruiter_views)} accent="pink" />
+        <Stat label="People watching" value={compactNumber(stats.views)} accent="white" />
+        <Stat label="Companies watching" value={compactNumber(stats.recruiter_views)} accent="pink" />
         <Stat label="Companies interested" value={stats.companies_interested} accent="violet" />
-        <Stat label="Interview requests" value={stats.interview_requests} accent="gold" />
+        <Stat label="Opportunities" value={stats.interview_requests} accent="gold" />
       </section>
 
       {bids.length > 0 ? (
         <section className="card p-5">
-          <h2 className="text-sm font-black uppercase tracking-widest text-muted">Bid history</h2>
+          <h2 className="text-sm font-black uppercase tracking-widest text-muted">How they climbed</h2>
           <ul className="mt-3 flex flex-col divide-y divide-line">
             {bids.map((b) => (
               <li key={b.id} className="flex items-center justify-between py-2 text-sm">

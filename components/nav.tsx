@@ -20,7 +20,7 @@ export async function Nav() {
 
         <nav className="ml-auto flex items-center gap-1 text-sm font-semibold sm:gap-2">
           <Link href="/recruiter" className="hidden rounded-full px-3 py-2 text-muted transition hover:bg-black/[0.04] hover:text-fg sm:block">
-            I&apos;m hiring
+            Discover talent
           </Link>
           {me ? (
             <>
@@ -33,7 +33,7 @@ export async function Nav() {
             </>
           ) : (
             <Link href="/join" className="btn btn-primary px-4 py-2 text-sm">
-              Put myself on the board
+              Claim your spot
             </Link>
           )}
         </nav>

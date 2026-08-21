@@ -3,7 +3,7 @@ import Link from "next/link";
 import { Avatar } from "@/components/avatar";
 import { ShareButton } from "@/components/share-button";
 import { Stat } from "@/components/stat";
-import { getRival, getStats, listInterest } from "@/lib/db";
+import { boardBids, getRival, getStats, listInterest } from "@/lib/db";
 import { compactNumber, usd, priceToBeat } from "@/lib/money";
 import { getMyListing } from "@/lib/owner";
 import { AVAILABILITY_LABEL, type Availability } from "@/lib/types";
@@ -44,7 +44,8 @@ export default async function DashboardPage({
     );
   }
 
-  const [stats, rival, interest] = await Promise.all([getStats(me.id), getRival(me), listInterest(me.id)]);
+  const [stats, rival, interest, bids] = await Promise.all([getStats(me.id), getRival(me), listInterest(me.id), boardBids()]);
+  const behindYou = Math.max(0, bids.length - (me.rank ?? bids.length));
   const target = rival ? priceToBeat(rival.current_bid) : priceToBeat(me.current_bid);
   const isLive = me.current_bid > 0;
 
@@ -54,13 +55,12 @@ export default async function DashboardPage({
       <div className="card mt-10 p-10 text-center">
         <span className="chip mx-auto border-gold/40 bg-gold/10 font-bold text-gold">Not live yet</span>
         <h1 className="mt-4 text-3xl font-black tracking-tighter">
-          {me.name.split(" ")[0]}, your profile is saved but hidden.
+          {me.name.split(" ")[0]}, you&apos;re not on the leaderboard yet.
         </h1>
         <p className="mx-auto mt-3 max-w-md text-muted">
-          The board isn&apos;t free — your bid is what puts you on it. Place one and you&apos;re public
-          instantly, at whatever rank it earns.
+          Your bid is your rank. Claim a position and you&apos;re live instantly, wherever it lands you.
         </p>
-        <Link href="/checkout?intent=bid" className="btn btn-primary mt-6">Place my bid</Link>
+        <Link href="/checkout?intent=bid" className="btn btn-primary mt-6">Claim my spot</Link>
       </div>
     );
   }
@@ -85,11 +85,11 @@ export default async function DashboardPage({
           </div>
           <div className="ml-auto flex gap-6 sm:gap-10">
             <div>
-              <div className="text-[11px] font-bold uppercase tracking-wider text-muted">current rank</div>
+              <div className="text-[11px] font-bold uppercase tracking-wider text-muted">your rank</div>
               <div className="text-4xl font-black tabular-nums text-gold sm:text-5xl">#{me.rank ?? "—"}</div>
             </div>
             <div>
-              <div className="text-[11px] font-bold uppercase tracking-wider text-muted">current bid</div>
+              <div className="text-[11px] font-bold uppercase tracking-wider text-muted">your bid</div>
               <div className="text-4xl font-black tabular-nums text-money sm:text-5xl">{usd(me.current_bid)}</div>
             </div>
           </div>
@@ -99,21 +99,21 @@ export default async function DashboardPage({
       <section className="card flex flex-col gap-5 border-lime/30 p-6 sm:flex-row sm:items-center">
         <div className="flex-1">
           <h2 className="text-lg font-black tracking-tight">
-            {rival ? <>Next above you: {rival.name} at {usd(rival.current_bid)}</> : <>You own the top spot 👑</>}
+            {rival ? <>Next to beat: {rival.name} at {usd(rival.current_bid)}</> : <>You own the top spot 👑</>}
           </h2>
           <p className="mt-1 text-sm text-muted">
             {rival ? (
               <>
-                Pay <span className="font-black text-money">{usd(target)}</span> and you take #{rival.rank}. The board updates instantly.
+                Only <span className="font-black text-money">{usd(target - me.current_bid)}</span> away. Take #{rival.rank} and the leaderboard updates instantly.
               </>
             ) : (
-              <>Someone will come for it. Raise your bid to make it expensive for them.</>
+              <>Someone will come for it. Raise your bid to make it expensive.</>
             )}
           </p>
         </div>
         <div className="flex gap-3">
           <Link href={`/checkout?intent=bid${rival ? `&beat=${rival.username}` : ""}`} className="btn btn-primary">
-            {rival ? `Outbid them · ${usd(target)}` : `Raise my bid · ${usd(target)}`}
+            {rival ? `Outbid them · ${usd(target)}` : `Go higher · ${usd(target)}`}
           </Link>
           <ShareButton
             url={`/profile/${me.username}`}
@@ -124,11 +124,11 @@ export default async function DashboardPage({
       </section>
 
       <section className="grid grid-cols-2 gap-3 lg:grid-cols-3">
-        <Stat label="Profile views" value={compactNumber(stats.views)} accent="white" sub="all time" />
+        <Stat label="People watching you" value={compactNumber(stats.views)} accent="white" sub="all time" />
         <Stat label="Portfolio clicks" value={compactNumber(stats.portfolio_clicks)} accent="lime" sub="people who left to look" />
-        <Stat label="Recruiter views" value={compactNumber(stats.recruiter_views)} accent="pink" sub="people who unlocked you" />
+        <Stat label="Companies watching you" value={compactNumber(stats.recruiter_views)} accent="pink" sub="companies that looked" />
         <Stat label="Companies interested" value={stats.companies_interested} accent="violet" />
-        <Stat label="Interview requests" value={stats.interview_requests} accent="gold" />
+        <Stat label="Opportunities" value={stats.interview_requests} accent="gold" sub="interview requests" />
         <Stat label="Hires" value={stats.hires} accent="lime" />
       </section>
 
@@ -139,7 +139,7 @@ export default async function DashboardPage({
         </div>
         {interest.length === 0 ? (
           <p className="mt-4 text-sm text-muted">
-            Nothing yet. Climbing the board is the fastest way to change that — the top three get most of the traffic.
+            Nothing yet. Climbing is the fastest way to change that — the top three get most of the attention.
           </p>
         ) : (
           <ul className="mt-4 flex flex-col divide-y divide-line">
@@ -164,9 +164,9 @@ export default async function DashboardPage({
       <section className="card flex flex-wrap items-center gap-4 p-6">
         <div>
           <h2 className="font-black tracking-tight">Status: {AVAILABILITY_LABEL[me.availability as Availability]}</h2>
-          <p className="text-sm text-muted">Your public profile is live at {profilePath(me.username)}</p>
+          <p className="text-sm text-muted">You&apos;re ahead of {behindYou} {behindYou === 1 ? "person" : "people"} · {profilePath(me.username)}</p>
         </div>
-        <Link href={`/profile/${me.username}`} className="btn btn-ghost ml-auto">View public profile</Link>
+        <Link href={`/profile/${me.username}`} className="btn btn-ghost ml-auto">View my profile</Link>
       </section>
     </div>
   );

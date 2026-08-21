@@ -17,7 +17,7 @@ function Submit() {
   const { pending } = useFormStatus();
   return (
     <button type="submit" disabled={pending} className="btn btn-primary w-full text-base disabled:opacity-60">
-      {pending ? "Taking you to payment…" : "Continue to payment →"}
+      {pending ? "Taking you to payment…" : "Claim my spot →"}
     </button>
   );
 }
@@ -62,7 +62,7 @@ export function JoinForm({ boardBids }: { boardBids: number[] }) {
             <p className="mt-1 text-xs text-muted">No link? We&apos;ll draw you a loud gradient instead.</p>
           </div>
           <div>
-            <label className="label" htmlFor="bio">One-line pitch</label>
+            <label className="label" htmlFor="bio">Why hire me</label>
             <textarea id="bio" name="bio" rows={3} maxLength={280} value={bio} onChange={(e) => setBio(e.target.value)} className="field resize-none" placeholder="I ship AI products fast. Last one went 0 → 40k users in six weeks." />
             <p className="mt-1 text-right text-xs text-muted">{bio.length}/280</p>
           </div>
@@ -83,9 +83,9 @@ export function JoinForm({ boardBids }: { boardBids: number[] }) {
         </div>
 
         <div className="card flex flex-col gap-4 p-5">
-          <h2 className="text-sm font-black uppercase tracking-widest text-muted">Your links are your CV</h2>
+          <h2 className="text-sm font-black uppercase tracking-widest text-muted">Proof</h2>
           <div>
-            <label className="label" htmlFor="portfolio_url">Portfolio / site / GitHub *</label>
+            <label className="label" htmlFor="portfolio_url">Show your work *</label>
             <input id="portfolio_url" name="portfolio_url" required className="field" placeholder="yoursite.com" />
           </div>
           <div className="grid gap-4 sm:grid-cols-3">
@@ -127,16 +127,16 @@ export function JoinForm({ boardBids }: { boardBids: number[] }) {
           <div>
             <label className="label" htmlFor="contact_email">Contact email</label>
             <input id="contact_email" name="contact_email" type="email" required className="field" placeholder="you@example.com" />
-            <p className="mt-1 text-xs text-muted">Hidden until a recruiter pays to unlock it. Never shown publicly.</p>
+            <p className="mt-1 text-xs text-muted">Hidden until a company pays to unlock it. Never shown publicly.</p>
           </div>
           <input type="hidden" name="username" value={username} />
         </div>
 
         <div className="card flex flex-col gap-4 p-5">
           <div>
-            <h2 className="text-sm font-black uppercase tracking-widest text-muted">Your opening bid</h2>
+            <h2 className="text-sm font-black uppercase tracking-widest text-muted">Claim your position</h2>
             <p className="mt-1 text-sm text-muted">
-              Your bid is your rank. Bid more than someone and you take their spot — {usd(bid)} puts you at{" "}
+              Your bid is your rank. Outbid someone and you take their place — {usd(bid)} puts you at{" "}
               <span className="font-black text-fg">#{projectedRank}</span> right now.
             </p>
           </div>
@@ -155,13 +155,13 @@ export function JoinForm({ boardBids }: { boardBids: number[] }) {
             />
           </div>
           <p className={`text-xs ${bid < MIN_BID ? "text-pink" : "text-muted"}`}>
-            Minimum {usd(MIN_BID)}. You pay on the next screen — nothing is public until it clears.
+            Minimum {usd(MIN_BID)}. You pay on the next screen — nothing goes public until it clears.
           </p>
         </div>
 
         <Submit />
         <p className="text-center text-xs text-muted">
-          No free listings, and no account to create — you&apos;ll get a private link to manage your
+          No free spots, and no account to create — you&apos;ll get a private link to manage your
           listing after paying.
         </p>
       </form>
@@ -177,7 +177,7 @@ export function JoinForm({ boardBids }: { boardBids: number[] }) {
               <div className="mt-1 text-xs text-muted">{profilePath(username)}</div>
             </div>
           </div>
-          <p className="mt-4 text-sm text-fg/80">{bio || "Your one-line pitch shows up right here. Make it embarrassing to ignore."}</p>
+          <p className="mt-4 text-sm text-fg/80">{bio || "Your pitch shows up right here. Make it embarrassing to ignore."}</p>
           <div className="mt-4 flex flex-wrap gap-2">
             <span className="chip border-lime/30 text-money">{AVAILABILITY_LABEL[availability]}</span>
             {location ? <span className="chip">📍 {location}</span> : null}

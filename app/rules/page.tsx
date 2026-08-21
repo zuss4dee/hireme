@@ -19,7 +19,7 @@ const SECTIONS = [
   {
     title: "What you can list",
     items: [
-      "A real person looking for work, with a working portfolio, site or profile link.",
+      "A real person worth discovering, with a working portfolio, site or profile link.",
       "One listing per person. Duplicates get removed.",
       "No agencies, no lead-gen, no listings on someone else's behalf without their say-so.",
     ],
@@ -34,11 +34,11 @@ const SECTIONS = [
     ],
   },
   {
-    title: "For recruiters",
+    title: "For companies",
     items: [
       `Browsing is free. ${usd(UNLOCK_PRICE)} unlocks one candidate's contact details.`,
-      "Unlocking notifies the candidate that you're interested.",
-      "Contact details are for contacting that candidate. Don't resell, scrape or bulk-export them.",
+      "Unlocking notifies them that you're interested.",
+      "Contact details are for contacting that person. Don't resell, scrape or bulk-export them.",
     ],
   },
 ];
@@ -49,8 +49,8 @@ export default function RulesPage() {
       <header>
         <h1 className="text-4xl font-black tracking-tighter">Rules</h1>
         <p className="mt-3 text-muted">
-          {SITE_NAME} is a public leaderboard. You pay to stand above everyone else. Rank is the
-          bid — nothing else.
+          {SITE_NAME} is a public leaderboard for talent. You pay to stand above everyone else.
+          Rank is the bid — nothing else.
         </p>
       </header>
 
@@ -73,11 +73,11 @@ export default function RulesPage() {
         <div className="mt-3 flex flex-col gap-3 text-fg/80">
           <p>
             Payments are <span className="font-bold">non-refundable</span>. A bid buys a position on a
-            public board, delivered immediately — it is not a guarantee of staying there, of being
+            public leaderboard, delivered immediately — it is not a guarantee of staying there, of being
             contacted, or of being hired. Being outbid is the game working as intended, not a fault.
           </p>
           <p>
-            Recruiter unlocks are non-refundable once the contact details have been revealed, because
+            Unlocks are non-refundable once the contact details have been revealed, because
             that is the entire thing being sold.
           </p>
           <p>
@@ -92,13 +92,22 @@ export default function RulesPage() {
         <h2 className="text-lg font-black tracking-tight">Moderation</h2>
         <p className="mt-3 text-fg/80">
           We can remove any listing from the board — impersonation, abuse, spam, or anything that
-          makes the board worse. A removed listing keeps its data and can be restored, but does not
+          makes the leaderboard worse. A removed listing keeps its data and can be restored, but does not
           appear publicly. Removal for breaking these rules does not come with a refund.
         </p>
       </section>
 
       <p className="text-sm text-muted">
-        Payments are processed by <span className="font-semibold text-fg">Stripe</span>.{" "}
+        The outbid mechanic is inspired by{" "}
+        <a
+          href="https://outbid.lol"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="font-semibold text-fg underline decoration-money underline-offset-2 hover:text-money"
+        >
+          outbid.lol
+        </a>
+        . Payments are processed by <span className="font-semibold text-fg">Stripe</span>.{" "}
         <Link href="/" className="font-semibold text-money hover:underline">Back to the board</Link>
       </p>
     </div>

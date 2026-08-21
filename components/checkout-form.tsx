@@ -99,7 +99,7 @@ export function CheckoutForm({
             />
           </div>
           <div className="mt-3 flex items-center justify-between gap-3 rounded-xl border border-line bg-surface-2 px-4 py-3">
-            <span className="text-sm text-muted">This bid lands you at</span>
+            <span className="text-sm text-muted">This puts you at</span>
             <span className="text-2xl font-black tabular-nums text-gold">#{projectedRank}</span>
           </div>
           <p className={`mt-2 text-xs ${tooLow ? "text-pink" : "text-muted"}`}>
@@ -180,7 +180,7 @@ export function CheckoutForm({
       ) : null}
 
       <button onClick={pay} disabled={busy || !agreed} className="btn btn-primary w-full text-base disabled:opacity-50">
-        {busy ? "Taking you to payment…" : `Pay ${usd(value)}`}
+        {busy ? "Taking you to payment…" : intent === "bid" ? `Take the spot · ${usd(value)}` : `Pay ${usd(value)}`}
       </button>
 
       <p className="text-center text-xs text-muted">

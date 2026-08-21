@@ -41,5 +41,5 @@ export function profilePath(username: string) {
 }
 
 export function shareText(rank: number | null) {
-  return `I'm #${rank ?? "?"} on ${SITE_NAME}. Outbid me if you dare.`;
+  return `I'm currently #${rank ?? "?"} on ${SITE_NAME}. Can you beat me?`;
 }

@@ -7,7 +7,7 @@ import { Search } from "@/components/search";
 import { listCandidates } from "@/lib/db";
 import { usd, UNLOCK_PRICE } from "@/lib/money";
 
-export const metadata: Metadata = { title: "Browse candidates" };
+export const metadata: Metadata = { title: "Discover talent" };
 export const dynamic = "force-dynamic";
 
 const STATUS_OPTIONS = [
@@ -72,14 +72,14 @@ export default async function RecruiterPage({
         <div className="pointer-events-none absolute -right-16 -top-24 h-64 w-64 rounded-full bg-pink/20 blur-3xl" />
         <div className="relative flex flex-wrap items-start gap-4">
           <div className="min-w-0 flex-1">
-            <span className="chip border-pink/40 bg-pink/10 text-pink">For recruiters</span>
+            <span className="chip border-pink/40 bg-pink/10 text-pink">For companies</span>
             <h1 className="mt-3 text-3xl font-black tracking-tighter sm:text-5xl">
-              Stop posting jobs.
+              The best talent
               <br />
-              <span className="text-pink">Start picking people.</span>
+              <span className="text-pink">isn&apos;t applying.</span>
             </h1>
             <p className="mt-3 max-w-xl text-muted">
-              No job posts. No applications. No inbox full of maybes. Browse everyone for free — pay{" "}
+              Discover people already proving they deserve attention. Browse everyone for free — pay{" "}
               <span className="font-black text-fg">{usd(UNLOCK_PRICE)}</span> only when you want to actually talk to someone.
             </p>
           </div>
@@ -87,7 +87,7 @@ export default async function RecruiterPage({
 
         <div className="relative mt-6 grid gap-3 sm:grid-cols-3">
           {[
-            { n: "1", t: "Browse", d: "Ranked by how badly they want it." },
+            { n: "1", t: "Discover", d: "Ranked by how badly they want it." },
             { n: "2", t: `Unlock · ${usd(UNLOCK_PRICE)}`, d: "Contact details revealed instantly." },
             { n: "3", t: "Talk", d: "They get notified that you're interested." },
           ].map((s) => (
@@ -108,7 +108,7 @@ export default async function RecruiterPage({
         <FilterBar groups={groups} active={{ status, skill, location, budget }} basePath="/recruiter" query={q} />
         <div className="flex items-center justify-between border-t border-line pt-3 text-sm text-muted">
           <span>
-            <span className="font-bold text-fg">{candidates.length}</span> of {all.length} on the board
+            <span className="font-bold text-fg">{candidates.length}</span> of {all.length} competing
           </span>
           {status || skill || location || budget ? (
             <Link href={q ? `/recruiter?q=${encodeURIComponent(q)}` : "/recruiter"} className="font-semibold text-pink hover:underline">

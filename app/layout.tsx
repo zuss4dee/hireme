@@ -8,14 +8,14 @@ import { SITE_NAME, SITE_URL } from "@/lib/site";
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: `${SITE_NAME} — who deserves to be hired?`,
+    default: `${SITE_NAME} — the internet's leaderboard for talent`,
     template: `%s · ${SITE_NAME}`,
   },
   description:
-    "A public leaderboard of people who want to be hired. Outbid your way to the top. Recruiters browse for free and hire directly.",
+    "Stop applying. Start getting discovered. Climb the leaderboard and let companies come to you.",
   openGraph: {
-    title: `${SITE_NAME} — who deserves to be hired?`,
-    description: "Pay to climb. Get discovered. The leaderboard is the product.",
+    title: `${SITE_NAME} — the internet's leaderboard for talent`,
+    description: "Stop applying. Start getting discovered.",
     type: "website",
   },
   twitter: { card: "summary_large_image" },
@@ -40,19 +40,32 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             Says so on its own, and disappears the moment Supabase is wired up. */}
         {!supabaseConfigured ? (
           <p className="border-b border-gold/30 bg-gold/10 px-4 py-2 text-center text-xs font-semibold text-gold">
-            Preview — these are example listings while we get set up. Nobody here is a real candidate yet.
+            Preview — these are example listings while we get set up. Nobody here is real yet.
           </p>
         ) : null}
         <main className="mx-auto w-full max-w-5xl px-4 pb-24 pt-6 sm:px-6">{children}</main>
         <footer className="border-t border-line/60 py-10 text-sm text-muted">
           <div className="mx-auto flex w-full max-w-5xl flex-col gap-3 px-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
             <p>
-              <span className="font-black text-fg">{SITE_NAME}</span> — the leaderboard is the product.
+              <span className="font-black text-fg">{SITE_NAME}</span> — where talent gets discovered.
+              <br className="sm:hidden" />
+              <span className="sm:ml-1">
+                Inspired by{" "}
+                <a
+                  href="https://outbid.lol"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-semibold text-fg underline decoration-money underline-offset-2 hover:text-money"
+                >
+                  outbid.lol
+                </a>
+                .
+              </span>
             </p>
             <div className="flex gap-5">
               <Link href="/" className="hover:text-fg">Leaderboard</Link>
-              <Link href="/join" className="hover:text-fg">Join</Link>
-              <Link href="/recruiter" className="hover:text-fg">For recruiters</Link>
+              <Link href="/join" className="hover:text-fg">Claim your spot</Link>
+              <Link href="/recruiter" className="hover:text-fg">Discover talent</Link>
               <Link href="/rules" className="hover:text-fg">Rules</Link>
             </div>
           </div>

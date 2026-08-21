@@ -5,7 +5,7 @@ import { JoinForm } from "@/components/join-form";
 import { getMyListing } from "@/lib/owner";
 import { boardBids } from "@/lib/db";
 
-export const metadata: Metadata = { title: "Put yourself on the board" };
+export const metadata: Metadata = { title: "Get on the leaderboard" };
 export const dynamic = "force-dynamic";
 
 export default async function JoinPage() {
@@ -18,17 +18,17 @@ export default async function JoinPage() {
     <div className="flex flex-col gap-8 pt-6">
       <header className="text-center">
         <h1 className="text-4xl font-black tracking-tighter sm:text-5xl">
-          Put yourself <span className="text-money">on the board</span>
+          Get on the <span className="text-money">leaderboard</span>
         </h1>
         <p className="mx-auto mt-3 max-w-lg text-muted">
-          Two minutes. No CV, no cover letter, no “tell us about a time you failed”. Pick your bid, take your rank.
+          Two minutes. No forms, no cover letter, no waiting to hear back. Pick your bid, take your rank.
         </p>
       </header>
 
       <JoinForm boardBids={bids} />
 
       <p className="text-center text-sm text-muted">
-        Just here to hire someone? <Link href="/recruiter" className="font-semibold text-money hover:underline">Browse the board</Link>
+        Here to hire? <Link href="/recruiter" className="font-semibold text-money hover:underline">Discover talent</Link>
       </p>
     </div>
   );

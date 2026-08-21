@@ -53,7 +53,7 @@ export default async function CheckoutPage({
 
     const presets = [
       {
-        label: beatsRival ? `Beat ${rival!.name.split(" ")[0]}` : isLive ? "Nudge it up" : "Your bid",
+        label: beatsRival ? `Beat ${rival!.name.split(" ")[0]}` : isLive ? "Edge ahead" : "Your bid",
         amount: target,
         hint: `lands at #${rankFor(target)}`,
       },
@@ -61,7 +61,7 @@ export default async function CheckoutPage({
       {
         label: "Take #1",
         amount: top && top.id !== mine.id ? Math.max(priceToBeat(top.current_bid), minimum) : minimum + 1000,
-        hint: "top of the board",
+        hint: "top of the leaderboard",
       },
     ].filter((p, i, arr) => arr.findIndex((x) => x.amount === p.amount) === i);
 
@@ -71,26 +71,26 @@ export default async function CheckoutPage({
           <div className="card border-lime/40 bg-lime/[0.06] p-5 text-center">
             <p className="text-lg font-black tracking-tight">Profile saved — one step left 🎉</p>
             <p className="mt-1 text-sm text-muted">
-              Your listing goes public the moment this clears. Until then nobody can see it.
+              You go live the moment this clears. Until then nobody can see you.
             </p>
           </div>
         ) : null}
 
         <header>
           <h1 className="text-3xl font-black tracking-tighter sm:text-4xl">
-            {isLive ? "Climb the board" : "Claim your spot"}
+            {isLive ? "Claim a higher position" : "Claim your spot"}
           </h1>
           <p className="mt-2 text-muted">
             {isLive ? (
               <>
-                You&apos;re <span className="font-bold text-fg">#{mine.rank ?? "—"}</span> at{" "}
+                You&apos;re currently <span className="font-bold text-fg">#{mine.rank ?? "—"}</span> at{" "}
                 <span className="font-bold text-money">{usd(mine.current_bid)}</span>.
               </>
             ) : (
-              <>Your bid is your rank — pay more than someone and you take their place.</>
+              <>Your bid is your rank — outbid someone and you take their place.</>
             )}
             {beatsRival ? (
-              <> Pay <span className="font-bold text-money">{usd(target)}</span> to take #{rival!.rank} from {rival!.name}.</>
+              <> Pay <span className="font-bold text-money">{usd(target)}</span> to move above the current #{rival!.rank}.</>
             ) : isLive ? (
               <> Nobody above you. Raise your bid to make the top spot expensive.</>
             ) : null}

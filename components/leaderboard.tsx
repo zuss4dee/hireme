@@ -49,7 +49,7 @@ export function LeaderboardRow({ c, index = 0 }: { c: Candidate; index?: number 
         <div className="text-right">
           <div className="text-base font-black tabular-nums text-money sm:text-lg">{usd(c.current_bid)}</div>
           {/* the caption is wider than the number — on phones it would squeeze the name */}
-          <div className="hidden text-[10px] font-semibold uppercase tracking-wider text-muted sm:block">current bid</div>
+          <div className="hidden text-[10px] font-semibold uppercase tracking-wider text-muted sm:block">their bid</div>
         </div>
         <Link
           href={`/checkout?intent=bid&beat=${c.username}`}
@@ -68,8 +68,8 @@ export function Leaderboard({ candidates }: { candidates: Candidate[] }) {
     return (
       <div className="card p-10 text-center">
         <p className="text-lg font-bold">Nobody here.</p>
-        <p className="mt-1 text-muted">Try a different search — or take the whole board for yourself.</p>
-        <Link href="/join" className="btn btn-primary mt-5">Put myself on the board</Link>
+        <p className="mt-1 text-muted">Try a different search — or take the whole leaderboard for yourself.</p>
+        <Link href="/join" className="btn btn-primary mt-5">Claim your spot</Link>
       </div>
     );
   }

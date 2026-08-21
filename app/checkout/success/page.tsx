@@ -80,7 +80,7 @@ export default async function SuccessPage({ searchParams }: { searchParams: Prom
         <h1 className="mt-3 text-2xl font-black tracking-tighter">We couldn&apos;t apply it yet.</h1>
         <p className="mt-3 text-muted">
           Your card was charged {usd(amount)} and we have the receipt, but something went wrong
-          putting you on the board. Nothing is lost — reload this page in a minute and it will
+          putting you on the leaderboard. Nothing is lost — reload this page in a minute and it will
           finish on its own.
         </p>
         <p className="mt-3 text-sm text-muted">
@@ -115,13 +115,15 @@ export default async function SuccessPage({ searchParams }: { searchParams: Prom
 
         {isBid ? (
           <div className="relative">
-            <p className="text-sm font-black uppercase tracking-widest text-money">Bid placed</p>
+            <p className="text-sm font-black uppercase tracking-widest text-money">You&apos;re live. Now climb.</p>
             <h1 className="mt-3 text-5xl font-black tracking-tighter sm:text-7xl">#{candidate.rank ?? "—"}</h1>
             <p className="mt-2 text-lg font-semibold">
-              {candidate.rank === 1 ? "You own the top of the board 👑" : `You're now #${candidate.rank} at ${usd(candidate.current_bid)}`}
+              {candidate.rank === 1
+                ? "You own the top spot 👑"
+                : `You're currently #${candidate.rank} — ${(candidate.rank ?? 1) - 1} ${(candidate.rank ?? 1) - 1 === 1 ? "person is" : "people are"} ahead of you`}
             </p>
             <p className="mt-3 text-sm text-muted">
-              Paid {usd(amount)}. The board already updated — everyone can see it.
+              Paid {usd(amount)}. The leaderboard already updated — everyone can see it. Outbid your way up.
             </p>
             {candidate.manage_token ? <ManageLink url={`${SITE_URL}/manage?key=${candidate.manage_token}`} /> : null}
 
@@ -156,7 +158,7 @@ export default async function SuccessPage({ searchParams }: { searchParams: Prom
             </p>
             <div className="mt-7 flex flex-col justify-center gap-3 sm:flex-row">
               <Link href={`/profile/${candidate.username}`} className="btn btn-primary">Back to their profile</Link>
-              <Link href="/recruiter" className="btn btn-ghost">Find someone else</Link>
+              <Link href="/recruiter" className="btn btn-ghost">Discover more talent</Link>
             </div>
           </div>
         )}
