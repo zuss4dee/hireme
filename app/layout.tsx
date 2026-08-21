@@ -63,6 +63,14 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               </span>
             </p>
             <div className="flex gap-5">
+              <a
+                href="https://x.com/theadeosun"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:text-fg"
+              >
+                Built by Dami
+              </a>
               <Link href="/" className="hover:text-fg">Leaderboard</Link>
               <Link href="/join" className="hover:text-fg">Claim your spot</Link>
               <Link href="/recruiter" className="hover:text-fg">Discover talent</Link>

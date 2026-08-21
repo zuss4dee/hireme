@@ -1,24 +1,30 @@
 import Link from "next/link";
 import { Suspense } from "react";
 import { Leaderboard } from "@/components/leaderboard";
+import { ClaimBar } from "@/components/claim-bar";
 import { Search } from "@/components/search";
 import { Ticker } from "@/components/ticker";
-import { listCandidates, recentActivity } from "@/lib/db";
-import { usd } from "@/lib/money";
+import { boardBids, getSiteVisits, listCandidates, recentActivity } from "@/lib/db";
+import { compactNumber, usd } from "@/lib/money";
 
 export const dynamic = "force-dynamic";
 
 export default async function HomePage({ searchParams }: { searchParams: Promise<{ q?: string }> }) {
   const { q } = await searchParams;
-  const [candidates, activity] = await Promise.all([listCandidates({ q }), recentActivity()]);
-  const topBid = candidates[0]?.current_bid ?? 0;
+  const [candidates, activity, siteVisits, bids] = await Promise.all([listCandidates({ q }), recentActivity(), getSiteVisits(), boardBids()]);
+  const topBid = bids[0] ?? 0;
 
   return (
     <div className="flex flex-col gap-8">
       <section className="pt-6 text-center sm:pt-12">
-        <span className="chip mx-auto border-lime/30 bg-lime/10 text-money">
-          <span className="h-1.5 w-1.5 rounded-full bg-money pulse-ring" /> live · {candidates.length} competing right now
-        </span>
+        <div className="flex flex-wrap items-center justify-center gap-2">
+          <span className="chip border-lime/30 bg-lime/10 text-money">
+            <span className="h-1.5 w-1.5 rounded-full bg-money pulse-ring" /> live · {candidates.length} competing right now
+          </span>
+          <span className="chip border-pink/30 bg-pink/10 text-pink">
+            {compactNumber(siteVisits)} visits since launch
+          </span>
+        </div>
         <h1 className="mx-auto mt-5 max-w-3xl text-4xl font-black leading-[0.95] tracking-tighter sm:text-6xl md:text-7xl">
           The internet&apos;s
           <br />
@@ -28,14 +34,7 @@ export default async function HomePage({ searchParams }: { searchParams: Promise
           Stop applying. Start getting discovered. Create your profile, climb the leaderboard,
           and let companies come to you.
         </p>
-        <div className="mt-7 flex flex-col items-center justify-center gap-3 sm:flex-row">
-          <Link href="/join" className="btn btn-primary w-full text-base sm:w-auto">
-            Claim your spot →
-          </Link>
-          <Link href="/recruiter" className="btn btn-ghost w-full text-base sm:w-auto">
-            Discover talent
-          </Link>
-        </div>
+        <ClaimBar boardBids={bids} />
         <div className="mx-auto mt-10 grid max-w-3xl divide-y divide-line border-y border-line text-left sm:grid-cols-3 sm:divide-x sm:divide-y-0">
           {[
             { number: "01", title: "Build your profile", text: "Show your skills, work, and what you want next.", href: "/join" },

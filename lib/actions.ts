@@ -1,5 +1,6 @@
 "use server";
 
+import { createHash } from "node:crypto";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createCandidate, recordView, slugify, usernameTaken } from "./db";
@@ -22,6 +23,14 @@ function url(value: FormDataEntryValue | null): string | null {
   } catch {
     return null;
   }
+}
+
+function automaticPhoto(email: string, portfolio: string, suppliedPhoto: FormDataEntryValue | null): string {
+  const explicit = url(suppliedPhoto);
+  if (explicit) return explicit;
+
+  const emailHash = createHash("md5").update(email.trim().toLowerCase()).digest("hex");
+  return `https://www.gravatar.com/avatar/${emailHash}?d=${encodeURIComponent(`https://unavatar.io/${portfolio}`)}&s=512`;
 }
 
 async function freeUsername(base: string) {
@@ -58,7 +67,7 @@ export async function createProfileAction(_prev: FormState, formData: FormData):
     user_id: userId,
     name,
     username,
-    photo: url(formData.get("photo")),
+    photo: automaticPhoto(email, portfolio, formData.get("photo")),
     title,
     bio: bio || null,
     location: String(formData.get("location") ?? "").trim() || null,

@@ -6,7 +6,7 @@ export const UNLOCK_PRICE = 2500; // $25 to unlock a candidate's contact details
  * means "profile created, not paid for yet" and stays off the leaderboard.
  * Raise this if the board fills up with drive-by signups.
  */
-export const MIN_BID = 100; // $1
+export const MIN_BID = 500; // $5
 
 export function usd(cents: number, opts: { decimals?: boolean } = {}) {
   const dollars = cents / 100;

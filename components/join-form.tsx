@@ -13,6 +13,10 @@ function slug(s: string) {
   return s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 32);
 }
 
+function isLinkOrHandle(value: string) {
+  return value.includes(".") || value.startsWith("http://") || value.startsWith("https://") || value.startsWith("@");
+}
+
 function Submit() {
   const { pending } = useFormStatus();
   return (
@@ -22,16 +26,17 @@ function Submit() {
   );
 }
 
-export function JoinForm({ boardBids }: { boardBids: number[] }) {
+export function JoinForm({ boardBids, claim, initialBid }: { boardBids: number[]; claim?: string; initialBid?: number }) {
   const [state, action] = useActionState<FormState, FormData>(createProfileAction, undefined);
-  const [name, setName] = useState("");
+  const [name, setName] = useState(() => (claim && !isLinkOrHandle(claim) ? claim : ""));
   const [title, setTitle] = useState("");
   const [photo, setPhoto] = useState("");
   const [bio, setBio] = useState("");
   const [location, setLocation] = useState("");
   const [skills, setSkills] = useState("");
+  const [portfolio, setPortfolio] = useState(() => (claim && isLinkOrHandle(claim) ? claim : ""));
   const [availability, setAvailability] = useState<Availability>("open");
-  const [bid, setBid] = useState(MIN_BID);
+  const [bid, setBid] = useState(() => Math.max(MIN_BID, initialBid ?? MIN_BID));
   const username = slug(name) || "you";
   const parsedSkills = parseSkills(skills);
   // Same arithmetic the server does: your bid slots you in wherever it lands.
@@ -86,7 +91,7 @@ export function JoinForm({ boardBids }: { boardBids: number[] }) {
           <h2 className="text-sm font-black uppercase tracking-widest text-muted">Proof</h2>
           <div>
             <label className="label" htmlFor="portfolio_url">Show your work *</label>
-            <input id="portfolio_url" name="portfolio_url" required className="field" placeholder="yoursite.com" />
+            <input id="portfolio_url" name="portfolio_url" required value={portfolio} onChange={(e) => setPortfolio(e.target.value)} className="field" placeholder="yoursite.com" />
           </div>
           <div className="grid gap-4 sm:grid-cols-3">
             <div>

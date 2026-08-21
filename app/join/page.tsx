@@ -8,11 +8,17 @@ import { boardBids } from "@/lib/db";
 export const metadata: Metadata = { title: "Get on the leaderboard" };
 export const dynamic = "force-dynamic";
 
-export default async function JoinPage() {
+export default async function JoinPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ claim?: string; amount?: string }>;
+}) {
   // Already own a listing on this device? Manage it instead of making another.
   if (await getMyListing()) redirect("/dashboard");
 
   const bids = await boardBids();
+  const { claim, amount } = await searchParams;
+  const initialBid = Number.isFinite(Number(amount)) ? Number(amount) : undefined;
 
   return (
     <div className="flex flex-col gap-8 pt-6">
@@ -25,7 +31,7 @@ export default async function JoinPage() {
         </p>
       </header>
 
-      <JoinForm boardBids={bids} />
+      <JoinForm boardBids={bids} claim={claim} initialBid={initialBid} />
 
       <p className="text-center text-sm text-muted">
         Here to hire? <Link href="/recruiter" className="font-semibold text-money hover:underline">Discover talent</Link>

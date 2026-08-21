@@ -1,5 +1,6 @@
 import "server-only";
 import { demoDB, demoRecomputeRanks, demoStats } from "./demo-store";
+import { MIN_BID } from "./money";
 import { adminClient, serverClient, supabaseConfigured } from "./supabase";
 import type { Bid, Candidate, CandidateStats, Interest, InterestType, PaymentType } from "./types";
 
@@ -122,6 +123,18 @@ export async function getStats(candidateId: string): Promise<CandidateStats> {
   };
 }
 
+export async function getSiteVisits(): Promise<number> {
+  if (!supabaseConfigured) {
+    const db = demoDB();
+    return Object.values(db.baseline).reduce((total, stats) => total + stats.views, 0) + db.views.length;
+  }
+
+  const sb = await serverClient();
+  const { count, error } = await sb.from("profile_views").select("id", { count: "exact", head: true });
+  if (error) throw error;
+  return count ?? 0;
+}
+
 export async function listInterest(candidateId: string): Promise<Interest[]> {
   if (!supabaseConfigured) {
     return demoDB()
@@ -225,6 +238,7 @@ export async function placeBid(args: { candidateId: string; userId: string | nul
     const db = demoDB();
     const row = db.candidates.find((c) => c.id === candidateId);
     if (!row) throw new Error("candidate_not_found");
+    if (amount < MIN_BID) throw new Error("bid_too_low");
     if (amount <= row.current_bid) throw new Error("bid_too_low");
     row.current_bid = amount;
     db.bids.push({ id: uid("bid"), candidate_id: candidateId, amount, created_at: new Date().toISOString() });

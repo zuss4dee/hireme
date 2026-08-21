@@ -4,7 +4,7 @@ import { fulfil } from "@/lib/fulfil";
 import { ensureVisitorId } from "@/lib/session";
 import { getMyListing } from "@/lib/owner";
 import { automaticTax, lineItemFor, stripe, stripeConfigured } from "@/lib/stripe";
-import { UNLOCK_PRICE } from "@/lib/money";
+import { MIN_BID, UNLOCK_PRICE } from "@/lib/money";
 import type { PaymentType } from "@/lib/types";
 
 const INTENTS: PaymentType[] = ["bid", "unlock", "interview", "hire"];
@@ -27,8 +27,8 @@ export async function POST(req: Request) {
   // Recruiter unlocks have one price and the server decides it. Only bids take
   // an amount from the client, and it still has to clear the current bid below.
   const amount = intent === "bid" ? Math.round(Number(body.amount ?? 0)) : UNLOCK_PRICE;
-  if (!Number.isFinite(amount) || amount < 100 || amount > 5_000_000) {
-    return NextResponse.json({ error: "Bids must be between $1 and $50,000." }, { status: 400 });
+  if (!Number.isFinite(amount) || amount < MIN_BID || amount > 5_000_000) {
+    return NextResponse.json({ error: "Bids must be between $5 and $50,000." }, { status: 400 });
   }
 
   const candidate = body.candidateId ? await getCandidateById(body.candidateId) : null;
