@@ -51,6 +51,13 @@ create table if not exists public.profile_views (
 );
 create index if not exists profile_views_candidate_idx on public.profile_views (candidate_id, created_at desc);
 
+-- ---------------------------------------------------------- site_visits
+create table if not exists public.site_visits (
+  id         uuid primary key default gen_random_uuid(),
+  created_at timestamptz not null default now()
+);
+create index if not exists site_visits_created_idx on public.site_visits (created_at desc);
+
 -- ---------------------------------------------------- recruiter_interest
 create table if not exists public.recruiter_interest (
   id           uuid primary key default gen_random_uuid(),
@@ -140,6 +147,7 @@ for each statement execute function public.trg_recompute_ranks();
 alter table public.candidate_profiles enable row level security;
 alter table public.bids               enable row level security;
 alter table public.profile_views      enable row level security;
+alter table public.site_visits        enable row level security;
 alter table public.recruiter_interest enable row level security;
 alter table public.payments           enable row level security;
 

@@ -8,6 +8,7 @@ import type { Bid, Candidate, CandidateStats, Interest } from "./types";
  */
 type ViewRow = { candidate_id: string; viewer_id: string | null; viewer_role: string; source: string; created_at: string };
 type PaymentRow = { id: string; user_id: string | null; candidate_id: string | null; amount: number; payment_type: string; provider_payment_id: string | null; fulfilled_at?: string | null; created_at: string };
+type SiteVisitRow = { created_at: string };
 
 type DemoDB = {
   candidates: Candidate[];
@@ -15,6 +16,7 @@ type DemoDB = {
   views: ViewRow[];
   interest: Interest[];
   payments: PaymentRow[];
+  site_visits?: SiteVisitRow[];
   baseline: Record<string, { views: number; recruiter_views: number; portfolio_clicks: number }>;
 };
 
@@ -49,7 +51,7 @@ function build(): DemoDB {
     });
   });
 
-  return { candidates, bids, views: [], interest, payments: [], baseline };
+  return { candidates, bids, views: [], interest, payments: [], site_visits: [], baseline };
 }
 
 const g = globalThis as unknown as { __hiremeDemoDB?: DemoDB };

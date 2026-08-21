@@ -4,13 +4,14 @@ import { Leaderboard } from "@/components/leaderboard";
 import { ClaimBar } from "@/components/claim-bar";
 import { Search } from "@/components/search";
 import { Ticker } from "@/components/ticker";
-import { boardBids, getSiteVisits, listCandidates, recentActivity } from "@/lib/db";
+import { boardBids, getSiteVisits, listCandidates, recentActivity, recordSiteVisit } from "@/lib/db";
 import { compactNumber, usd } from "@/lib/money";
 
 export const dynamic = "force-dynamic";
 
 export default async function HomePage({ searchParams }: { searchParams: Promise<{ q?: string }> }) {
   const { q } = await searchParams;
+  await recordSiteVisit();
   const [candidates, activity, siteVisits, bids] = await Promise.all([listCandidates({ q }), recentActivity(), getSiteVisits(), boardBids()]);
   const topBid = bids[0] ?? 0;
 

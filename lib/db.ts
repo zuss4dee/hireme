@@ -126,11 +126,11 @@ export async function getStats(candidateId: string): Promise<CandidateStats> {
 export async function getSiteVisits(): Promise<number> {
   if (!supabaseConfigured) {
     const db = demoDB();
-    return Object.values(db.baseline).reduce((total, stats) => total + stats.views, 0) + db.views.length;
+    return (db.site_visits?.length ?? 0);
   }
 
-  const sb = await serverClient();
-  const { count, error } = await sb.from("profile_views").select("id", { count: "exact", head: true });
+  const sb = adminClient();
+  const { count, error } = await sb.from("site_visits").select("id", { count: "exact", head: true });
   if (error) throw error;
   return count ?? 0;
 }
@@ -271,6 +271,19 @@ export async function recordView(args: {
   }
   const sb = adminClient();
   await sb.from("profile_views").insert(row);
+}
+
+export async function recordSiteVisit() {
+  if (!supabaseConfigured) {
+    const db = demoDB();
+    db.site_visits ??= [];
+    db.site_visits.push({ created_at: new Date().toISOString() });
+    return;
+  }
+
+  const sb = adminClient();
+  const { error } = await sb.from("site_visits").insert({});
+  if (error) throw error;
 }
 
 export async function recordInterest(args: {
