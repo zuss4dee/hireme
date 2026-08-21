@@ -14,7 +14,7 @@ function origin(req: Request) {
 }
 
 export async function POST(req: Request) {
-  let body: { intent?: string; candidateId?: string; amount?: number; company?: string; message?: string };
+  let body: { intent?: string; candidateId?: string; amount?: number; company?: string; message?: string; acknowledged?: boolean };
   try {
     body = await req.json();
   } catch {
@@ -47,6 +47,12 @@ export async function POST(req: Request) {
   } else if (!user && !supabaseConfigured) {
     // Demo mode: browsing recruiters get an identity the moment they pay.
     await setDemoSession({ id: `demo-recruiter-${Math.random().toString(36).slice(2, 10)}`, role: "recruiter" });
+  }
+
+  // Refusing here as well as in the UI keeps the record honest: no payment is
+  // ever created without the buyer having accepted the terms.
+  if (body.acknowledged !== true) {
+    return NextResponse.json({ error: "You have to accept the terms before paying." }, { status: 400 });
   }
 
   const company = (body.company ?? "").trim().slice(0, 80) || null;
@@ -84,6 +90,8 @@ export async function POST(req: Request) {
       amount: String(amount),
       company: company ?? "",
       message: message ?? "",
+      acknowledged: "true",
+      acknowledged_at: new Date().toISOString(),
     },
   });
 

@@ -57,6 +57,13 @@ export default async function ProfilePage({ params }: Props) {
 
       <Link href="/" className="text-sm font-semibold text-muted transition hover:text-money">← back to the board</Link>
 
+      {c.hidden ? (
+        <p className="rounded-xl border border-pink/40 bg-pink/10 px-4 py-3 text-sm font-semibold text-pink">
+          This listing has been removed from the board by a moderator. It no longer appears in the
+          leaderboard, search or recruiter filters.
+        </p>
+      ) : null}
+
       {c.current_bid === 0 ? (
         <p className="rounded-xl border border-gold/40 bg-gold/10 px-4 py-3 text-sm font-semibold text-gold">
           This profile isn&apos;t on the board yet — no bid has been placed, so it won&apos;t show up in

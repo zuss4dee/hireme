@@ -159,6 +159,7 @@ export function seedCandidates(): Candidate[] {
     current_bid: s.bid,
     rank: i + 1,
     availability: s.availability,
+    hidden: false,
     contact_email: `${s.username}@example.com`,
     created_at: new Date(now - (SEEDS.length - i) * 86_400_000).toISOString(),
   }));

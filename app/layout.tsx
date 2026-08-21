@@ -45,6 +45,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               <Link href="/" className="hover:text-fg">Leaderboard</Link>
               <Link href="/join" className="hover:text-fg">Join</Link>
               <Link href="/recruiter" className="hover:text-fg">For recruiters</Link>
+              <Link href="/rules" className="hover:text-fg">Rules</Link>
             </div>
           </div>
         </footer>

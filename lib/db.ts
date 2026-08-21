@@ -4,7 +4,7 @@ import { adminClient, serverClient, supabaseConfigured } from "./supabase";
 import type { Bid, Candidate, CandidateStats, Interest, InterestType, PaymentType } from "./types";
 
 const CANDIDATE_COLS =
-  "id,user_id,name,username,photo,title,bio,location,portfolio_url,linkedin_url,github_url,twitter_url,skills,current_bid,rank,availability,contact_email,created_at";
+  "id,user_id,name,username,photo,title,bio,location,portfolio_url,linkedin_url,github_url,twitter_url,skills,current_bid,rank,availability,hidden,contact_email,created_at";
 
 function uid(prefix: string) {
   return `${prefix}-${Math.random().toString(36).slice(2, 10)}${Date.now().toString(36)}`;
@@ -27,7 +27,7 @@ export async function listCandidates(opts: { q?: string; limit?: number } = {}):
   if (!supabaseConfigured) {
     demoRecomputeRanks();
     // current_bid === 0 means the profile exists but was never paid for.
-    let rows = demoDB().candidates.filter((c) => c.current_bid > 0);
+    let rows = demoDB().candidates.filter((c) => c.current_bid > 0 && !c.hidden);
     if (q) rows = rows.filter((c) => matches(c, q));
     return rows.slice(0, limit);
   }
@@ -37,6 +37,7 @@ export async function listCandidates(opts: { q?: string; limit?: number } = {}):
     .from("candidate_profiles")
     .select(CANDIDATE_COLS)
     .gt("current_bid", 0)
+    .eq("hidden", false)
     .order("current_bid", { ascending: false })
     .order("created_at", { ascending: true })
     .limit(limit);
@@ -97,6 +98,7 @@ export async function getRival(candidate: Candidate): Promise<Candidate | null> 
     .from("candidate_profiles")
     .select(CANDIDATE_COLS)
     .gt("current_bid", candidate.current_bid)
+    .eq("hidden", false)
     .order("current_bid", { ascending: true })
     .limit(1);
   return ((data ?? [])[0] as Candidate) ?? null;
@@ -165,9 +167,13 @@ export async function boardBids(): Promise<number[]> {
 }
 
 export async function totalPot(): Promise<number> {
-  if (!supabaseConfigured) return demoDB().candidates.reduce((sum, c) => sum + c.current_bid, 0);
+  if (!supabaseConfigured) {
+    return demoDB()
+      .candidates.filter((c) => !c.hidden)
+      .reduce((sum, c) => sum + c.current_bid, 0);
+  }
   const sb = await serverClient();
-  const { data } = await sb.from("candidate_profiles").select("current_bid");
+  const { data } = await sb.from("candidate_profiles").select("current_bid").eq("hidden", false);
   return (data ?? []).reduce((sum: number, r: { current_bid: number }) => sum + r.current_bid, 0);
 }
 
@@ -177,13 +183,14 @@ export async function usernameTaken(username: string) {
 
 // ----------------------------------------------------------------- writes
 
-export type NewCandidate = Omit<Candidate, "id" | "rank" | "created_at" | "current_bid"> & { current_bid?: number };
+export type NewCandidate = Omit<Candidate, "id" | "rank" | "created_at" | "current_bid" | "hidden"> & { current_bid?: number };
 
 export async function createCandidate(input: NewCandidate): Promise<Candidate> {
   if (!supabaseConfigured) {
     const row: Candidate = {
       ...input,
       current_bid: input.current_bid ?? 0,
+      hidden: false,
       id: uid("cand"),
       rank: null,
       created_at: new Date().toISOString(),
@@ -339,7 +346,9 @@ export type ActivityItem = { id: string; name: string; username: string; amount:
 export async function recentActivity(limit = 12): Promise<ActivityItem[]> {
   if (!supabaseConfigured) {
     const db = demoDB();
-    const byId = new Map(db.candidates.map((c) => [c.id, c]));
+    // Only people currently on the board — a moderated listing must not keep
+    // scrolling across the homepage.
+    const byId = new Map(db.candidates.filter((c) => !c.hidden && c.current_bid > 0).map((c) => [c.id, c]));
     return db.bids
       .slice()
       .sort((a, b) => b.created_at.localeCompare(a.created_at))
@@ -353,7 +362,9 @@ export async function recentActivity(limit = 12): Promise<ActivityItem[]> {
   const sb = await serverClient();
   const { data } = await sb
     .from("bids")
-    .select("id,amount,created_at,candidate_profiles(name,username)")
+    .select("id,amount,created_at,candidate_profiles!inner(name,username)")
+    .eq("candidate_profiles.hidden", false)
+    .gt("candidate_profiles.current_bid", 0)
     .order("created_at", { ascending: false })
     .limit(limit);
 
@@ -367,4 +378,37 @@ export async function recentActivity(limit = 12): Promise<ActivityItem[]> {
       ? [{ id: r.id, name: r.candidate_profiles.name, username: r.candidate_profiles.username, amount: r.amount, created_at: r.created_at }]
       : [],
   );
+}
+
+
+// ------------------------------------------------------------- moderation
+
+/** Everyone, including unpaid and hidden rows. Admin views only. */
+export async function listAllCandidates(): Promise<Candidate[]> {
+  if (!supabaseConfigured) {
+    return [...demoDB().candidates].sort(
+      (a, b) => Number(b.hidden) - Number(a.hidden) || b.current_bid - a.current_bid,
+    );
+  }
+  const sb = adminClient();
+  const { data, error } = await sb
+    .from("candidate_profiles")
+    .select(CANDIDATE_COLS)
+    .order("hidden", { ascending: false })
+    .order("current_bid", { ascending: false })
+    .limit(500);
+  if (error) throw error;
+  return (data ?? []) as Candidate[];
+}
+
+export async function setHidden(id: string, hidden: boolean): Promise<void> {
+  if (!supabaseConfigured) {
+    const row = demoDB().candidates.find((c) => c.id === id);
+    if (row) row.hidden = hidden;
+    demoRecomputeRanks();
+    return;
+  }
+  const sb = adminClient();
+  await sb.from("candidate_profiles").update({ hidden }).eq("id", id);
+  await sb.rpc("recompute_ranks");
 }

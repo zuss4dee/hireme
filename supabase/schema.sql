@@ -30,6 +30,7 @@ create table if not exists public.candidate_profiles (
   rank          integer,
   availability  text not null default 'open'
                 check (availability in ('open','not_looking','passive','hired')),
+  hidden        boolean not null default false,
   contact_email text,
   created_at    timestamptz not null default now()
 );
@@ -82,20 +83,25 @@ create table if not exists public.payments (
 );
 
 -- --------------------------------------------------------------- ranking
--- A bid of 0 means "profile created, never paid for": it stays out of the
--- ranking until money lands.
+-- Ranks skip unpaid rows (current_bid = 0 means "created, never paid for")
+-- and moderated rows, and stale ranks are cleared when a row leaves the board.
 create or replace function public.recompute_ranks() returns void
-language sql security definer set search_path = public as $$
+language plpgsql security definer set search_path = public as $$
+begin
+  update candidate_profiles
+     set rank = null
+   where (current_bid <= 0 or hidden) and rank is not null;
+
+  with ranked as (
+    select id, row_number() over (order by current_bid desc, created_at asc) as rn
+      from candidate_profiles
+     where current_bid > 0 and not hidden
+  )
   update candidate_profiles c
-     set rank = r.rn
-    from (
-      select id,
-             case when current_bid > 0
-                  then row_number() over (order by current_bid desc, created_at asc)
-             end as rn
-        from candidate_profiles
-    ) r
-   where r.id = c.id and (c.rank is distinct from r.rn);
+     set rank = ranked.rn
+    from ranked
+   where ranked.id = c.id and c.rank is distinct from ranked.rn;
+end;
 $$;
 
 -- Atomic outbid: raises the bid, logs it, re-ranks. Rejects bids that are not

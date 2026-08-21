@@ -20,6 +20,8 @@ export type Candidate = {
   current_bid: number;
   rank: number | null;
   availability: Availability;
+  /** Moderated off the board. Keeps its data, holds no rank. */
+  hidden: boolean;
   contact_email: string | null;
   created_at: string;
 };

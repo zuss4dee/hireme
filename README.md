@@ -48,6 +48,8 @@ when its token and product id are present. Either can be enabled independently.
 | `/dashboard` | Candidate analytics + the "outbid them" loop |
 | `/recruiter` | Free browsing grid — filter by status, skill, location and bid range |
 | `/checkout` | Bids and recruiter unlocks |
+| `/rules` | Ranking rules, refunds, chargebacks, moderation |
+| `/admin` | Moderation — hide/restore listings (404s unless `ADMIN_TOKEN` is set) |
 | `/checkout/success` | Confetti, new rank, share |
 
 ## How the money works
@@ -78,12 +80,27 @@ vercel
 Add the same environment variables in the Vercel project, then point a Polar webhook
 endpoint at `https://your-domain/api/polar/webhook` for `order.paid`.
 
+## Moderation
+
+Set `ADMIN_TOKEN` (e.g. `openssl rand -hex 32`) and `/admin` opens a token-gated list of every
+profile — live, unpaid and hidden — with one button each. Without the variable the route 404s,
+so no admin surface exists at all.
+
+Hiding is reversible and destroys nothing: the profile, its bids and its payment history stay.
+A hidden listing drops out of the board, search, recruiter filters, the homepage activity ticker
+and the total, holds no rank, and the ranks below it close up. The owner sees a notice on their
+dashboard and profile explaining what happened.
+
 ## Notes
 
 **Skills accept anything.** `lib/skills.ts` splits on commas, newlines, bullets, pipes,
 semicolons and middots, so people can paste straight from a CV. Multi-word skills
 ("Design systems") and slashed ones ("CI/CD") survive intact; duplicates are dropped
 case-insensitively.
+
+**Every payment requires an explicit acknowledgement.** The checkout has a non-refundable
+consent checkbox, enforced server-side as well as in the UI, and the acceptance is written into
+the Polar payment metadata — so a chargeback can be answered with evidence the buyer agreed.
 
 **Recruiter facets come from the live board**, not a hardcoded taxonomy — the skill and
 location filters list whatever people actually put on their profiles, most common first.

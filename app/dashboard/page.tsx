@@ -67,6 +67,13 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
 
   return (
     <div className="flex flex-col gap-6 pt-4">
+      {me.hidden ? (
+        <p className="rounded-xl border border-pink/40 bg-pink/10 px-4 py-3 text-sm font-semibold text-pink">
+          Your listing has been removed from the board by a moderator. Your stats are frozen and
+          recruiters can no longer find you.
+        </p>
+      ) : null}
+
       {isPeek ? (
         <p className="rounded-xl border border-violet/40 bg-violet/10 px-4 py-3 text-sm font-semibold text-violet">
           Demo view — you&apos;re looking at {me.name}&apos;s dashboard. <Link href="/join" className="underline">Make your own →</Link>

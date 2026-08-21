@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import Link from "next/link";
 import { usd } from "@/lib/money";
 import type { PaymentType } from "@/lib/types";
 
@@ -36,6 +37,7 @@ export function CheckoutForm({
   const [value, setValue] = useState(amount);
   const [company, setCompany] = useState("");
   const [message, setMessage] = useState("");
+  const [agreed, setAgreed] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -52,12 +54,16 @@ export function CheckoutForm({
       setError(`Minimum is ${usd(minimum)} — you have to actually beat them.`);
       return;
     }
+    if (!agreed) {
+      setError("Tick the box to confirm you understand the terms.");
+      return;
+    }
     setBusy(true);
     try {
       const res = await fetch("/api/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ intent, candidateId, amount: value, company, message }),
+        body: JSON.stringify({ intent, candidateId, amount: value, company, message, acknowledged: agreed }),
       });
       const data = (await res.json()) as { url?: string; error?: string; redirect?: string };
       if (!res.ok || !data.url) {
@@ -143,11 +149,37 @@ export function CheckoutForm({
         </div>
       ) : null}
 
+      <label className="card flex cursor-pointer items-start gap-3 p-4">
+        <input
+          type="checkbox"
+          checked={agreed}
+          onChange={(e) => setAgreed(e.target.checked)}
+          className="mt-0.5 h-4 w-4 shrink-0 accent-[var(--color-money)]"
+        />
+        <span className="text-sm text-fg/80">
+          {intent === "bid" ? (
+            <>
+              I understand that a bid buys a position, not a guarantee — someone can outbid me at any
+              time — and that bids are <span className="font-bold">non-refundable</span>, because my
+              listing goes public immediately.
+            </>
+          ) : (
+            <>
+              I understand this reveals {candidateName.split(" ")[0]}&apos;s contact details
+              immediately and is <span className="font-bold">non-refundable</span> once unlocked.
+            </>
+          )}{" "}
+          <Link href="/rules" target="_blank" className="font-semibold text-money underline">
+            Read the rules
+          </Link>
+        </span>
+      </label>
+
       {error ? (
         <p className="rounded-xl border border-pink/40 bg-pink/10 px-4 py-3 text-sm font-semibold text-pink">{error}</p>
       ) : null}
 
-      <button onClick={pay} disabled={busy} className="btn btn-primary w-full text-base disabled:opacity-60">
+      <button onClick={pay} disabled={busy || !agreed} className="btn btn-primary w-full text-base disabled:opacity-50">
         {busy ? "Taking you to payment…" : `Pay ${usd(value)}`}
       </button>
 
