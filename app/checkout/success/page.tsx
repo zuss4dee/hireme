@@ -29,7 +29,10 @@ async function resolve(sp: Search): Promise<{ intent: PaymentType; amount: numbe
     const candidateId = asString(meta.candidate_id);
     const amount = Number(meta.amount ?? checkout.totalAmount ?? 0);
 
-    if (checkout.status === "succeeded" && candidateId) {
+    // Mirrors the webhook's guard — never grant a rank the payment didn't cover.
+    const paid = checkout.amount ?? checkout.totalAmount ?? 0;
+
+    if (checkout.status === "succeeded" && candidateId && paid >= amount) {
       await fulfil({
         intent,
         candidateId,

@@ -25,21 +25,18 @@ outbid, unlock, dashboard analytics) is clickable straight away.
    That creates every table, the RLS policies, the ranking function and the atomic `place_bid` RPC.
    Add the three Supabase keys. If you ran an earlier copy of the schema, apply
    `supabase/migrations/001_polar.sql` too.
-3. **Polar** — create two one-time products in the dashboard (sandbox.polar.sh while testing):
+3. **Polar** — create **one** one-time product in the dashboard (sandbox.polar.sh while
+   testing) and put its id in `POLAR_PRODUCT_ID`. Its catalog price is irrelevant: every
+   checkout sends an **ad-hoc GBP price**, so the amount is always the one the server
+   computed. That matters — with pay-what-you-want pricing the buyer can edit the amount on
+   Polar's page, which would let someone claim a £151 rank for £1.
 
-   | Product | Pricing | Env var |
-   | --- | --- | --- |
-   | Leaderboard bid | **Pay what you want** | `POLAR_BID_PRODUCT_ID` |
-   | Unlock candidate | **Fixed, £25** | `POLAR_UNLOCK_PRODUCT_ID` |
-
-   Enable **GBP** on both — this app sends amounts in pence, and if GBP isn't enabled Polar
-   falls back to your organization's default currency and reads those numbers as its minor
-   units instead. Then add `POLAR_ACCESS_TOKEN`, leave `POLAR_SERVER=sandbox` until you go
-   live, and add a webhook pointing at `/api/polar/webhook` subscribed to `order.paid`.
-   Paste its signing secret as `POLAR_WEBHOOK_SECRET`.
+   Then add `POLAR_ACCESS_TOKEN`, leave `POLAR_SERVER=sandbox` until you go live, and add a
+   webhook pointing at `/api/polar/webhook` subscribed to `order.paid`. Paste its signing
+   secret as `POLAR_WEBHOOK_SECRET`.
 
 The app switches backends automatically: Supabase when its keys are present, Polar Checkout
-when its token and both product ids are present. Either can be enabled independently.
+when its token and product id are present. Either can be enabled independently.
 
 ## Pages
 
@@ -63,8 +60,10 @@ Everything is stored in **pence** (`current_bid: 4800` = £48).
 - **Unlock / interview / hire** — a recruiter pays £25 (`UNLOCK_PRICE`) to reveal contact
   details. A `recruiter_interest` row lands on the candidate's dashboard.
 
-Bids ride Polar's pay-what-you-want pricing, so the buyer's chosen amount is the price.
-Unlocks use a fixed-price product, so Polar owns that number and the app never sends one.
+Both bids and unlocks are ad-hoc fixed prices created with the checkout, so the server is
+the only thing that decides what anything costs. The client can propose a bid amount; it is
+re-validated against the current bid before checkout. Unlock prices ignore the client
+entirely. The webhook refuses to fulfil an order that cleared for less than it should have.
 
 Fulfilment lives in one place (`lib/fulfil.ts`) and is idempotent on the Polar checkout id,
 so the webhook and the success page can both call it safely. Polar is the merchant of

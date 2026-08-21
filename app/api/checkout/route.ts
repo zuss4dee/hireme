@@ -2,7 +2,8 @@ import { NextResponse } from "next/server";
 import { getCandidateById, getCandidateByUserId } from "@/lib/db";
 import { fulfil } from "@/lib/fulfil";
 import { getSessionUser, setDemoSession } from "@/lib/session";
-import { polar, polarConfigured, productFor } from "@/lib/polar";
+import { adHocPrice, polar, polarConfigured, PRODUCT_ID_FOR_CHECKOUT } from "@/lib/polar";
+import { UNLOCK_PRICE } from "@/lib/money";
 import { supabaseConfigured } from "@/lib/supabase";
 import type { PaymentType } from "@/lib/types";
 
@@ -23,7 +24,9 @@ export async function POST(req: Request) {
   const intent = body.intent as PaymentType;
   if (!INTENTS.includes(intent)) return NextResponse.json({ error: "Unknown intent" }, { status: 400 });
 
-  const amount = Math.round(Number(body.amount ?? 0));
+  // Recruiter unlocks have one price and the server decides it. Only bids take
+  // an amount from the client, and it still has to clear the current bid below.
+  const amount = intent === "bid" ? Math.round(Number(body.amount ?? 0)) : UNLOCK_PRICE;
   if (!Number.isFinite(amount) || amount < 100 || amount > 5_000_000) {
     return NextResponse.json({ error: "Bids must be between £1 and £50,000." }, { status: 400 });
   }
@@ -68,13 +71,10 @@ export async function POST(req: Request) {
   }
 
   // --------------------------------------------------------- polar checkout
-  const product = productFor(intent);
   const checkout = await polar().checkouts.create({
-    products: [product.id],
-    // Only the bid product is pay-what-you-want; the unlock product carries its
-    // own fixed price and Polar rejects an amount for it.
-    ...(product.payWhatYouWant ? { amount } : {}),
-    currency: "gbp",
+    products: [PRODUCT_ID_FOR_CHECKOUT()],
+    // Ad-hoc price: locks the amount to what the server just computed.
+    prices: adHocPrice(amount),
     customerEmail: user?.email || undefined,
     successUrl: `${origin(req)}/checkout/success?checkout_id={CHECKOUT_ID}`,
     metadata: {

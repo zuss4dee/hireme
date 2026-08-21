@@ -39,12 +39,23 @@ export async function POST(req: Request) {
     const meta = (order.metadata ?? {}) as Record<string, unknown>;
     const candidateId = str(meta.candidate_id);
 
+    // What we asked for vs. what actually cleared. The ad-hoc price should make
+    // these identical; if they ever diverge, the money wins and we don't grant a
+    // rank that wasn't paid for.
+    const expected = Number(meta.amount ?? 0);
+    const paid = order.subtotalAmount ?? order.totalAmount ?? 0;
+
+    if (candidateId && paid < expected) {
+      console.error("[polar] underpaid order, refusing to fulfil", { orderId: order.id, expected, paid });
+      return NextResponse.json({ received: true, ignored: "underpaid" });
+    }
+
     if (candidateId) {
       const result = await fulfil({
         intent: (str(meta.intent) as PaymentType) || "unlock",
         candidateId,
         userId: str(meta.user_id) || null,
-        amount: Number(meta.amount ?? order.totalAmount ?? 0),
+        amount: expected || paid,
         company: str(meta.company) || null,
         message: str(meta.message) || null,
         // Keyed on the checkout so the success page and this handler collapse
