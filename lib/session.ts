@@ -24,7 +24,7 @@ export async function getSessionUser(): Promise<SessionUser | null> {
   if (!id) return null;
   return {
     id,
-    email: store.get("hireme_email")?.value ?? "you@hireme.lol",
+    email: store.get("hireme_email")?.value ?? "you@example.com",
     role: (store.get(DEMO_ROLE_COOKIE)?.value as SessionUser["role"]) ?? "candidate",
   };
 }

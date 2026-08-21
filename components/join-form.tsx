@@ -5,6 +5,7 @@ import { useFormStatus } from "react-dom";
 import { Avatar } from "./avatar";
 import { createProfileAction, type FormState } from "@/lib/actions";
 import { AVAILABILITY_LABEL, type Availability } from "@/lib/types";
+import { profilePath } from "@/lib/site";
 
 function slug(s: string) {
   return s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 32);
@@ -119,7 +120,7 @@ export function JoinForm() {
             <div className="min-w-0">
               <div className="truncate text-xl font-black tracking-tight">{name || "Your name"}</div>
               <div className="truncate text-sm text-muted">{title || "Your role"}</div>
-              <div className="mt-1 text-xs text-muted">hireme.lol/{username}</div>
+              <div className="mt-1 text-xs text-muted">{profilePath(username)}</div>
             </div>
           </div>
           <p className="mt-4 text-sm text-fg/80">{bio || "Your one-line pitch shows up right here. Make it embarrassing to ignore."}</p>

@@ -8,6 +8,7 @@ import { compactNumber, usd, priceToBeat } from "@/lib/money";
 import { getSessionUser } from "@/lib/session";
 import { supabaseConfigured } from "@/lib/supabase";
 import { AVAILABILITY_LABEL } from "@/lib/types";
+import { profilePath, shareText } from "@/lib/site";
 
 export const metadata: Metadata = { title: "Dashboard" };
 export const dynamic = "force-dynamic";
@@ -61,7 +62,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
           <div className="min-w-0">
             <p className="text-sm text-muted">Welcome back,</p>
             <h1 className="text-2xl font-black tracking-tighter sm:text-3xl">{me.name.split(" ")[0]}</h1>
-            <Link href={`/profile/${me.username}`} className="text-sm text-muted hover:text-money">hireme.lol/{me.username} ↗</Link>
+            <Link href={`/profile/${me.username}`} className="text-sm text-muted hover:text-money">{profilePath(me.username)} ↗</Link>
           </div>
           <div className="ml-auto flex gap-6 sm:gap-10">
             <div>
@@ -97,7 +98,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
           </Link>
           <ShareButton
             url={`/profile/${me.username}`}
-            text={`I'm #${me.rank ?? "?"} on HireMe.lol. Outbid me if you dare.`}
+            text={shareText(me.rank)}
             className="btn btn-ghost"
           />
         </div>
@@ -144,7 +145,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
       <section className="card flex flex-wrap items-center gap-4 p-6">
         <div>
           <h2 className="font-black tracking-tight">Status: {AVAILABILITY_LABEL[me.availability]}</h2>
-          <p className="text-sm text-muted">Your public profile is live at hireme.lol/{me.username}</p>
+          <p className="text-sm text-muted">Your public profile is live at {profilePath(me.username)}</p>
         </div>
         <Link href={`/profile/${me.username}`} className="btn btn-ghost ml-auto">View public profile</Link>
       </section>

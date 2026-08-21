@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { SITE_NAME } from "@/lib/site";
 
 export function ShareButton({
   url,
@@ -19,7 +20,7 @@ export function ShareButton({
     const absolute = url.startsWith("http") ? url : `${window.location.origin}${url}`;
     if (navigator.share) {
       try {
-        await navigator.share({ title: "HireMe.lol", text, url: absolute });
+        await navigator.share({ title: SITE_NAME, text, url: absolute });
         return;
       } catch {
         // user dismissed — fall through to copy

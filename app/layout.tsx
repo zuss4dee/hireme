@@ -2,17 +2,18 @@ import type { Metadata, Viewport } from "next";
 import Link from "next/link";
 import "./globals.css";
 import { Nav } from "@/components/nav";
+import { SITE_NAME, SITE_URL } from "@/lib/site";
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "https://hireme.lol"),
+  metadataBase: new URL(SITE_URL),
   title: {
-    default: "HireMe.lol — who deserves to be hired?",
-    template: "%s · HireMe.lol",
+    default: `${SITE_NAME} — who deserves to be hired?`,
+    template: `%s · ${SITE_NAME}`,
   },
   description:
     "A public leaderboard of people who want to be hired. Outbid your way to the top. Recruiters browse for free and hire directly.",
   openGraph: {
-    title: "HireMe.lol — who deserves to be hired?",
+    title: `${SITE_NAME} — who deserves to be hired?`,
     description: "Pay to climb. Get discovered. The leaderboard is the product.",
     type: "website",
   },
@@ -38,7 +39,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <footer className="border-t border-line/60 py-10 text-sm text-muted">
           <div className="mx-auto flex w-full max-w-5xl flex-col gap-3 px-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
             <p>
-              <span className="font-black text-fg">HireMe.lol</span> — the leaderboard is the product.
+              <span className="font-black text-fg">{SITE_NAME}</span> — the leaderboard is the product.
             </p>
             <div className="flex gap-5">
               <Link href="/" className="hover:text-fg">Leaderboard</Link>

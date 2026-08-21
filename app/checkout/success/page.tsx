@@ -9,6 +9,7 @@ import { usd } from "@/lib/money";
 import { getSessionUser } from "@/lib/session";
 import { polar, polarConfigured } from "@/lib/polar";
 import type { Candidate, PaymentType } from "@/lib/types";
+import { shareText } from "@/lib/site";
 
 export const metadata: Metadata = { title: "Payment complete" };
 export const dynamic = "force-dynamic";
@@ -97,7 +98,7 @@ export default async function SuccessPage({ searchParams }: { searchParams: Prom
             <div className="mt-7 flex flex-col justify-center gap-3 sm:flex-row">
               <ShareButton
                 url={`/profile/${candidate.username}`}
-                text={`I'm #${candidate.rank ?? "?"} on HireMe.lol. Outbid me if you dare.`}
+                text={shareText(candidate.rank)}
                 label="Share my rank 🔥"
                 className="btn btn-primary"
               />

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { getSessionUser } from "@/lib/session";
 import { getCandidateByUserId } from "@/lib/db";
+import { SITE_BRAND, SITE_TLD } from "@/lib/site";
 
 export async function Nav() {
   const user = await getSessionUser();
@@ -14,7 +15,8 @@ export async function Nav() {
             $
           </span>
           <span className="text-lg font-black tracking-tight">
-            HireMe<span className="text-money">.lol</span>
+            {SITE_BRAND}
+            <span className="text-money">{SITE_TLD}</span>
           </span>
         </Link>
 

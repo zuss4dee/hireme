@@ -11,6 +11,7 @@ import { getCandidateByUsername, getRival, getStats, hasUnlocked, listBids } fro
 import { compactNumber, usd, priceToBeat } from "@/lib/money";
 import { getSessionUser } from "@/lib/session";
 import { AVAILABILITY_LABEL } from "@/lib/types";
+import { SITE_NAME, shareText } from "@/lib/site";
 
 export const dynamic = "force-dynamic";
 
@@ -22,8 +23,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (!c) return { title: "Not on the board" };
   return {
     title: `${c.name} — ${c.title} · #${c.rank ?? "?"}`,
-    description: `${c.name} is #${c.rank ?? "?"} on HireMe.lol at ${usd(c.current_bid)}. ${c.bio ?? ""}`.trim(),
-    openGraph: { title: `${c.name} is #${c.rank ?? "?"} on HireMe.lol`, description: c.bio ?? c.title },
+    description: `${c.name} is #${c.rank ?? "?"} on ${SITE_NAME} at ${usd(c.current_bid)}. ${c.bio ?? ""}`.trim(),
+    openGraph: { title: `${c.name} is #${c.rank ?? "?"} on ${SITE_NAME}`, description: c.bio ?? c.title },
   };
 }
 
@@ -109,7 +110,7 @@ export default async function ProfilePage({ params }: Props) {
               <Link href="/dashboard" className="btn btn-primary flex-1">Go to my dashboard</Link>
               <ShareButton
                 url={`/profile/${c.username}`}
-                text={`I'm #${c.rank ?? "?"} on HireMe.lol. Outbid me if you dare.`}
+                text={shareText(c.rank)}
                 className="btn btn-ghost flex-1"
               />
             </>

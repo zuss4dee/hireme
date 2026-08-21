@@ -13,7 +13,7 @@ export const SEEDS: Seed[] = [
     name: "Damilare Adeosun", username: "damilare", title: "AI Product Builder",
     bio: "I ship AI products fast. Last one went 0 → 40k users in six weeks. I'd like to do that for you, ideally starting Monday.",
     location: "London, UK", skills: ["Next.js", "LLM apps", "Product", "TypeScript", "Growth"],
-    bid: 15000, availability: "open", portfolio: "https://hireme.lol",
+    bid: 15000, availability: "open", portfolio: "https://hireme.fit",
     links: { linkedin: "https://linkedin.com/in/damilare", github: "https://github.com/damilare", twitter: "https://x.com/damilare" },
     views: 12400, recruiterViews: 861, portfolioClicks: 3120,
     interest: [
@@ -159,7 +159,7 @@ export function seedCandidates(): Candidate[] {
     current_bid: s.bid,
     rank: i + 1,
     availability: s.availability,
-    contact_email: `${s.username}@hireme.lol`,
+    contact_email: `${s.username}@example.com`,
     created_at: new Date(now - (SEEDS.length - i) * 86_400_000).toISOString(),
   }));
 }
